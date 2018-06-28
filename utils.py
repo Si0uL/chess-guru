@@ -163,3 +163,18 @@ def is_check_mate(color, board):
                     return False
         return True
     return False
+
+def get_score(color, board):
+    values = {
+        'pawn': 1,
+        'tower': 5,
+        'knight': 3,
+        'bishop': 3,
+        'queen': 7,
+    }
+    to_return = 0
+    for row in board:
+        for piece in row:
+            to_return += (2*int(piece['color'] == color) - 1) * \
+                values.get(piece.get('type'), 0)
+    return to_return

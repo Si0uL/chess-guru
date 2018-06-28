@@ -1,5 +1,5 @@
 from flask import Flask, render_template, url_for, redirect
-from utils import available_movements, is_check_mate
+from utils import available_movements, is_check_mate, get_score
 
 app = Flask(__name__)
 
@@ -79,11 +79,12 @@ BOARD[1] = [{"color": "black", "type": "pawn"} for _ in range(8)]
 HIGHLIGHTED = []
 SELECTED = []
 TURN = 'white'
+SCORE = 0
 
 @app.route('/')
 def index():
     return render_template('index.html', board=BOARD, highlight=HIGHLIGHTED,
-                           selected=SELECTED, turn=TURN)
+                           selected=SELECTED, turn=TURN, score=SCORE)
 
 @app.route('/moves/<path:subpath>')
 def show_moves(subpath):
@@ -125,6 +126,8 @@ def play(subpath):
     # Change player up next
     global TURN
     TURN = {'white': 'black', 'black': 'white'}[TURN]
-    print(is_check_mate(TURN, BOARD))
+    # Change score
+    global SCORE
+    SCORE = get_score('white', BOARD)
 
     return redirect('/')
