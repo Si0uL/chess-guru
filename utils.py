@@ -135,6 +135,26 @@ def available_movements(location, board):
             to_return.append((nr, nc))
     return to_return
 
+def play(start, arrival, board):
+    """
+    Puts piece from start at arrival, MODIFIES board
+    """
+    board[arrival[0]][arrival[1]] = board[start[0]][start[1]]
+    board[start[0]][start[1]] = {'color': 'blank'}
+
+def score_per_play(arrival, board):
+    """
+    Return positive score gain if movement kills a piece, else 0
+    """
+    values = {
+        'pawn': 1,
+        'tower': 5,
+        'knight': 3,
+        'bishop': 3,
+        'queen': 7,
+    }
+    return values.get(board[arrival[0]][arrival[1]].get('type'), 0)
+
 
 def king_position(color, board):
     for r, row in enumerate(board):
@@ -143,8 +163,11 @@ def king_position(color, board):
                 return r, c
     return None
 
+def enemy(color):
+    return {'white': 'black', 'black': 'white'}[color]
+
 def is_check(color, board):
-    target_col = {'white': 'black', 'black': 'white'}[color]
+    target_col = enemy(color)
     kr, kc = king_position(color, board)
     for r, row in enumerate(board):
         for c, p in enumerate(row):
@@ -177,4 +200,19 @@ def get_score(color, board):
         for piece in row:
             to_return += (2*int(piece['color'] == color) - 1) * \
                 values.get(piece.get('type'), 0)
+    return to_return
+
+def all_available_movements(color, board, current_score):
+    to_return = []
+    for r, row in enumerate(board):
+        for c, piece in enumerate(row):
+            if piece['color'] == color:
+                amv = available_movements((r, c), board)
+                for nr, nc in amv:
+                    to_return.append({
+                        'from': (r, c),
+                        'to': (nr, nc),
+                        'next': [],
+                        'score': current_score + score_per_play((nr, nc), board)
+                    })
     return to_return
