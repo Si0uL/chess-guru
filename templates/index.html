@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Chess Guru</title>
+        <link href="https://fonts.googleapis.com/css?family=Carter+One" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Jaldi" rel="stylesheet">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <style>
+            .title {
+                font-family: 'Carter One', cursive;
+            }
+            .body {
+                font-family: 'Jaldi', sans-serif;
+                font-size: large;
+            }
+        </style>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="http://code.jquery.com/jquery-1.12.2.min.js"></script>
+    </head>
+
+    <body>
+        <h1 class="title" style="text-align:center; margin: 10px 0;">Chess Guru</h1>
+
+            <div class="row">
+                <div class="col-xs-6 col-xs-offset-3" style="text-align: center">
+                    <table class="table table-bordered" style="width:auto;">
+                        <tbody>
+                            {% for r  in range(8) %}
+                                <tr>
+                                    {% for c in range(8) %}
+                                        {% if (r, c) in highlight %}
+                                            <td class="success">
+                                        {% elif (r, c) in selected %}
+                                            <td class="danger">
+                                        {% elif (r+c)%2 == 0 %}
+                                            <td class="active">
+                                        {% else %}
+                                            <td>
+                                        {% endif %}
+                                            {% if board[r][c]['color'] == turn %}
+                                                <a href="/moves/{{r}}/{{c}}">
+                                            {% elif (r, c) in highlight %}
+                                                <a href="/play/{{selected[0][0]}}/{{selected[0][1]}}/{{r}}/{{c}}">
+                                            {% else %}
+                                                <a href="javascript:void(0);">
+                                            {% endif %}
+                                                <img src="static/img/{{ board[r][c]['color'] }}-{{ board[r][c]['type'] }}.png">
+                                            </a>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+    </body>
+</html>
