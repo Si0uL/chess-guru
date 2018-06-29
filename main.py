@@ -1,5 +1,6 @@
 from flask import Flask, render_template, url_for, redirect
 from utils import available_movements, is_check_mate, get_score
+import pickle
 
 app = Flask(__name__)
 
@@ -130,4 +131,10 @@ def play(subpath):
     global SCORE
     SCORE = get_score('white', BOARD)
 
+    return redirect('/')
+
+@app.route('/save')
+def save_board():
+    with open('board.p', 'wb') as _file:
+        pickle.dump(BOARD, _file)
     return redirect('/')

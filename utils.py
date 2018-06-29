@@ -37,7 +37,7 @@ def available_movements_raw(location, board):
             else:
                 pass
 
-    if typ == 'tower' or typ == 'queen':
+    if typ == 'rook' or typ == 'queen':
         # down
         r, c = location[0] + 1, location[1]
         while r < 8 and board[r][c]['color'] == 'blank':
@@ -148,7 +148,7 @@ def score_per_play(arrival, board):
     """
     values = {
         'pawn': 1,
-        'tower': 5,
+        'rook': 5,
         'knight': 3,
         'bishop': 3,
         'queen': 7,
@@ -187,10 +187,29 @@ def is_check_mate(color, board):
         return True
     return False
 
+def hash(board):
+    to_return = ''
+    translate = {
+        'pawn': 'P',
+        'rook': 'T',
+        'knight': 'K',
+        'bishop': 'B',
+        'queen': 'Q',
+        'king': 'G',
+        'white': 'W',
+        'black': 'B',
+    }
+    for r, row in enumerate(board):
+        for c, piece in enumerate(row):
+            if piece['color'] != 'blank':
+                to_return += str(r) + str(c) + translate[piece['color']] + \
+                    translate[piece['type']]
+    return to_return
+
 def get_score(color, board):
     values = {
         'pawn': 1,
-        'tower': 5,
+        'rook': 5,
         'knight': 3,
         'bishop': 3,
         'queen': 7,
@@ -202,7 +221,7 @@ def get_score(color, board):
                 values.get(piece.get('type'), 0)
     return to_return
 
-def all_available_movements(color, board, current_score):
+def all_available_movements(color, board, current_score, pos_score=True):
     to_return = []
     for r, row in enumerate(board):
         for c, piece in enumerate(row):
@@ -213,6 +232,36 @@ def all_available_movements(color, board, current_score):
                         'from': (r, c),
                         'to': (nr, nc),
                         'next': [],
-                        'score': current_score + score_per_play((nr, nc), board)
+                        'score': current_score + \
+                            score_per_play((nr, nc), board)*(2*int(pos_score)-1)
                     })
     return to_return
+
+def evaluate_best(color, board, depth=4, seen=set()):
+    current_score = get_score(color, board)
+    current_board = deepcopy(board)
+
+    def internal_evaluate(current_board, current_depth, current_score,
+                          current_color, counter):
+        if current_depth == 0:
+            return counter + 1, []
+        new_count = counter
+        moves = all_available_movements(current_color, current_board,
+                                        current_score, current_color == color)
+        for n, move in enumerate(moves):
+            if current_depth == depth:
+                print('{}/{}'.format(n, len(moves)))
+            _board = deepcopy(current_board)
+            seen.add(hash(_board))
+            play(move['from'], move['to'], _board)
+            new_count, next_list = internal_evaluate(_board, current_depth - 1,
+                                                     move['score'],
+                                                     enemy(current_color),
+                                                     new_count)
+            move['next'] = next_list
+        return new_count, moves
+
+    ct, tr = internal_evaluate(current_board, depth, current_score, color, 0)
+    print('Total Explored: {}'.format(ct))
+    print('Total Unique: {}'.format(len(seen)))
+    return tr
