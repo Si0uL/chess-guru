@@ -272,7 +272,7 @@ def all_available_movements(color, board, current_score, pos_score=True):
                     })
     return to_return
 
-def evaluate_best(color, board, depth=4, seen=set()):
+def build_tree(color, board, depth=4, seen=set()):
     """
     Constructs a tree of possible actions
     """
@@ -281,25 +281,55 @@ def evaluate_best(color, board, depth=4, seen=set()):
 
     def internal_evaluate(current_board, current_depth, current_score,
                           current_color, counter):
+        """
+        Returns (list of next moves, status ['normal', 'checkmate', 'draw'],
+        new counter)
+        """
         if current_depth == 0:
-            return counter + 1, []
+            return [], 'normal', counter + 1
         new_count = counter
         moves = all_available_movements(current_color, current_board,
                                         current_score, current_color == color)
+
+        # Treat checkmate and draw cases
+        if len(moves) == 0:
+            if is_check(current_color, current_board):
+                return [], 'checkmate', counter + 1
+            return [], 'draw', counter + 1
+
+        # Positive if we are current color is hero's one
+        sign = 2 * int(current_color == color) - 1
         for n, move in enumerate(moves):
+
             if current_depth == depth:
-                print('{}/{}'.format(n, len(moves)))
+                print('{}/{}'.format(n+1, len(moves)))
+
             _board = deepcopy(current_board)
             seen.add(hash(_board))
             play(move['from'], move['to'], _board)
-            new_count, next_list = internal_evaluate(_board, current_depth - 1,
-                                                     move['score'],
-                                                     enemy(current_color),
-                                                     new_count)
-            move['next'] = next_list
-        return new_count, moves
 
-    ct, tr = internal_evaluate(current_board, depth, current_score, color, 0)
+            next_list, next_status, new_count = internal_evaluate(
+                _board, current_depth - 1,
+                move['score'],
+                enemy(current_color),
+                new_count
+            )
+            if next_status == 'checkmate':
+                # +/- 1000 if you win / lose
+                move['score'] = sign * 1000
+            elif next_status == 'draw':
+                # 0 if you get a draw (worth if you are late in points)
+                move['score'] = 0
+            else:
+                if len(next_list) != 0:
+                    if sign > 0:
+                        move['score'] = min([elt['score'] for elt in next_list])
+                    else:
+                        move['score'] = max([elt['score'] for elt in next_list])
+            move['next'] = next_list
+        return moves, 'normal', new_count
+
+    tr, _, ct = internal_evaluate(current_board, depth, current_score, color, 0)
     print('Total Explored: {}'.format(ct))
     print('Total Unique: {}'.format(len(seen)))
     return tr

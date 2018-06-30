@@ -8,7 +8,7 @@ app = Flask(__name__)
 HIGHLIGHTED = []
 SELECTED = []
 TURN = 'white'
-SCORE = 0
+SCORE = get_score('white', BOARD)
 
 @app.route('/')
 def index():
