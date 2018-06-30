@@ -1,7 +1,17 @@
 from copy import deepcopy
 
 def available_movements_raw(location, board):
+    """
+    Takes a location and a board and return the available moves as a series of
+    arrival position tuple.
+    WARNING: does not take into account check
+    TODO: add castling and en-passant
+    """
     def remove_out_of_board(location_list):
+        """
+        (auxiliary) Remove out of board positions from a list of tuples and
+        and return the new list
+        """
         _tr = []
         for r, c in location_list:
             if not (max(r, c) > 7 or min(r, c) < 0):
@@ -125,6 +135,10 @@ def available_movements_raw(location, board):
     return to_return
 
 def available_movements(location, board):
+    """
+    Take a departure location and a board and returns a list of possible arrival
+    positions, using available_movements_raw, but taking check into account
+    """
     to_return = []
     amv = available_movements_raw(location, board)
     for nr, nc in amv:
@@ -137,7 +151,8 @@ def available_movements(location, board):
 
 def play(start, arrival, board):
     """
-    Puts piece from start at arrival, MODIFIES board
+    Puts piece located at start at arrival position, MODIFIES board
+    TODO: add piece creation
     """
     board[arrival[0]][arrival[1]] = board[start[0]][start[1]]
     board[start[0]][start[1]] = {'color': 'blank'}
@@ -145,6 +160,7 @@ def play(start, arrival, board):
 def score_per_play(arrival, board):
     """
     Return positive score gain if movement kills a piece, else 0
+    TODO: take into account piece creation
     """
     values = {
         'pawn': 1,
@@ -157,6 +173,9 @@ def score_per_play(arrival, board):
 
 
 def king_position(color, board):
+    """
+    Takes a color and a board and return the color's king location
+    """
     for r, row in enumerate(board):
         for c, piece in enumerate(row):
             if piece.get('type') == 'king' and piece['color'] == color:
@@ -164,9 +183,16 @@ def king_position(color, board):
     return None
 
 def enemy(color):
+    """
+    'inverts' the color
+    """
     return {'white': 'black', 'black': 'white'}[color]
 
 def is_check(color, board):
+    """
+    Takes a color and a board and returns a boolean whether the player is check
+    or not
+    """
     target_col = enemy(color)
     kr, kc = king_position(color, board)
     for r, row in enumerate(board):
@@ -188,6 +214,9 @@ def is_check_mate(color, board):
     return False
 
 def hash(board):
+    """
+    Converts a board into a unique string
+    """
     to_return = ''
     translate = {
         'pawn': 'P',
@@ -207,6 +236,9 @@ def hash(board):
     return to_return
 
 def get_score(color, board):
+    """
+    Takes a color and a board and return a score (+ in favour of the color)
+    """
     values = {
         'pawn': 1,
         'rook': 5,
@@ -222,6 +254,13 @@ def get_score(color, board):
     return to_return
 
 def all_available_movements(color, board, current_score, pos_score=True):
+    """
+    Takes a color, a board a current score and returns a list of dict containing
+        'from': departure location
+        'to': arrival location
+        'score': next score after this play
+        'next': empty list to be used in evaluate_best
+    """
     to_return = []
     for r, row in enumerate(board):
         for c, piece in enumerate(row):
@@ -238,6 +277,9 @@ def all_available_movements(color, board, current_score, pos_score=True):
     return to_return
 
 def evaluate_best(color, board, depth=4, seen=set()):
+    """
+    Constructs a tree of possible actions
+    """
     current_score = get_score(color, board)
     current_board = deepcopy(board)
 
