@@ -1,81 +1,9 @@
 from flask import Flask, render_template, url_for, redirect
 from utils import available_movements, is_check_mate, get_score
 import pickle
+from board import BOARD
 
 app = Flask(__name__)
-
-BOARD = [[{"color": "blank"} for _ in range(8)] for _ in range(8)]
-BOARD[7] = [
-    {
-        "color": "white",
-        "type": "rook",
-    },
-    {
-        "color": "white",
-        "type": "knight",
-    },
-    {
-        "color": "white",
-        "type": "bishop",
-    },
-    {
-        "color": "white",
-        "type": "queen",
-    },
-    {
-        "color": "white",
-        "type": "king",
-    },
-    {
-        "color": "white",
-        "type": "bishop",
-    },
-    {
-        "color": "white",
-        "type": "knight",
-    },
-    {
-        "color": "white",
-        "type": "rook",
-    },
-]
-BOARD[0] = [
-    {
-        "color": "black",
-        "type": "rook",
-    },
-    {
-        "color": "black",
-        "type": "knight",
-    },
-    {
-        "color": "black",
-        "type": "bishop",
-    },
-    {
-        "color": "black",
-        "type": "queen",
-    },
-    {
-        "color": "black",
-        "type": "king",
-    },
-    {
-        "color": "black",
-        "type": "bishop",
-    },
-    {
-        "color": "black",
-        "type": "knight",
-    },
-    {
-        "color": "black",
-        "type": "rook",
-    },
-]
-
-BOARD[6] = [{"color": "white", "type": "pawn"} for _ in range(8)]
-BOARD[1] = [{"color": "black", "type": "pawn"} for _ in range(8)]
 
 HIGHLIGHTED = []
 SELECTED = []
