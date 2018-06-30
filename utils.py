@@ -203,15 +203,11 @@ def is_check(color, board):
     return False
 
 def is_check_mate(color, board):
-    if is_check(color, board):
-        # Try to find a solution
-        for r, row in enumerate(board):
-            for c, p in enumerate(row):
-                if p['color'] == color and \
-                    available_movements((r, c), board) != []:
-                    return False
-        return True
-    return False
+    """
+    Tests if a situation is a checkmate or a draw
+    """
+    return is_check(color, board) and \
+        all_available_movements(color, board, 0) == []
 
 def hash(board):
     """
