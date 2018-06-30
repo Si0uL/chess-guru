@@ -1,7 +1,7 @@
-from flask import Flask, render_template, url_for, redirect
-from utils import available_movements, is_check_mate, get_score
 import pickle
 from board import BOARD
+from flask import Flask, render_template, url_for, redirect
+from utils import available_movements, is_check_mate, get_score, build_tree
 
 app = Flask(__name__)
 
@@ -9,6 +9,7 @@ HIGHLIGHTED = []
 SELECTED = []
 TURN = 'white'
 SCORE = get_score('white', BOARD)
+DEPTH = 4
 
 @app.route('/')
 def index():
@@ -54,6 +55,40 @@ def play(subpath):
         del SELECTED[0]
     # Change player up next
     global TURN
+    TURN = {'white': 'black', 'black': 'white'}[TURN]
+    # Change score
+    global SCORE
+    SCORE = get_score('white', BOARD)
+
+    return redirect('/')
+
+@app.route('/autoplay')
+def autoplay():
+
+    # find the best move
+    global TURN
+    tree = build_tree(TURN, BOARD, DEPTH)
+    best_score = -5000
+    best_index = -1
+    for idx, move in enumerate(tree):
+        if best_score < move['score']:
+            best_score = move['score']
+            best_index = idx
+
+    # Get departure/arrival positions
+    srow, scol = tree[best_index]['from']
+    arow, acol = tree[best_index]['to']
+
+    # Move the piece
+    BOARD[arow][acol] = BOARD[srow][scol]
+    BOARD[srow][scol] = {'color': 'blank'}
+    # empty HIGHLIGHTED
+    for _ in range(len(HIGHLIGHTED)):
+        del HIGHLIGHTED[0]
+    # empty SELECTED
+    for _ in range(len(SELECTED)):
+        del SELECTED[0]
+    # Change player up next
     TURN = {'white': 'black', 'black': 'white'}[TURN]
     # Change score
     global SCORE
