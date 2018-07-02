@@ -209,11 +209,11 @@ def is_check_mate(color, board):
     return is_check(color, board) and \
         all_available_movements(color, board, 0) == []
 
-def hash(board):
+def my_hash(board, turn):
     """
     Converts a board into a unique string
     """
-    to_return = ''
+    to_return = turn[0].capitalize()
     translate = {
         'pawn': 'P',
         'rook': 'T',
@@ -272,7 +272,7 @@ def all_available_movements(color, board, current_score, pos_score=True):
                     })
     return to_return
 
-def build_tree(color, board, depth=4, seen=set()):
+def build_tree_old(color, board, depth=4, seen=set()):
     """
     Constructs a tree of possible actions
     """
@@ -305,7 +305,7 @@ def build_tree(color, board, depth=4, seen=set()):
                 print('{}/{}'.format(n+1, len(moves)))
 
             _board = deepcopy(current_board)
-            seen.add(hash(_board))
+            seen.add(my_hash(_board, current_color))
             play(move['from'], move['to'], _board)
 
             next_list, next_status, new_count = internal_evaluate(
@@ -314,6 +314,79 @@ def build_tree(color, board, depth=4, seen=set()):
                 enemy(current_color),
                 new_count
             )
+            if next_status == 'checkmate':
+                # +/- 1000 if you win / lose
+                move['score'] = sign * 1000
+            elif next_status == 'draw':
+                # 0 if you get a draw (worth if you are late in points)
+                move['score'] = 0
+            else:
+                if len(next_list) != 0:
+                    if sign > 0:
+                        move['score'] = min([elt['score'] for elt in next_list])
+                    else:
+                        move['score'] = max([elt['score'] for elt in next_list])
+            move['next'] = next_list
+        return moves, 'normal', new_count
+
+    tr, _, ct = internal_evaluate(current_board, depth, current_score, color, 0)
+    print('Total Explored: {}'.format(ct))
+    print('Total Unique: {}'.format(len(seen)))
+    return tr
+
+
+def build_tree(color, board, depth=4, seen=set()):
+    """
+    Constructs a tree of possible actions
+    """
+    current_score = get_score(color, board)
+    current_board = deepcopy(board)
+
+    memory = {}
+
+    def internal_evaluate(current_board, current_depth, current_score,
+                          current_color, counter):
+        """
+        Returns (list of next moves, status ['normal', 'checkmate', 'draw'],
+        new counter)
+        """
+        if current_depth == 0:
+            return [], 'normal', counter + 1
+        new_count = counter
+        moves = all_available_movements(current_color, current_board,
+                                        current_score, current_color == color)
+
+        # Treat checkmate and draw cases
+        if len(moves) == 0:
+            if is_check(current_color, current_board):
+                return [], 'checkmate', counter + 1
+            return [], 'draw', counter + 1
+
+        # Positive if we are current color is hero's one
+        sign = 2 * int(current_color == color) - 1
+        for n, move in enumerate(moves):
+
+            if current_depth == depth:
+                print('{}/{}'.format(n+1, len(moves)))
+
+            _board = deepcopy(current_board)
+            play(move['from'], move['to'], _board)
+            seen.add(my_hash(_board, current_color))
+
+            new_hash = str(current_depth - 1) + my_hash(_board,
+                                                        enemy(current_color))
+            if new_hash in memory:
+                next_list, next_status, new_count = memory[new_hash]
+            else:
+                next_list, next_status, new_count = internal_evaluate(
+                    _board,
+                    current_depth - 1,
+                    move['score'],
+                    enemy(current_color),
+                    new_count
+                )
+                memory[new_hash] = (next_list, next_status, new_count)
+
             if next_status == 'checkmate':
                 # +/- 1000 if you win / lose
                 move['score'] = sign * 1000
