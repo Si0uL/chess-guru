@@ -306,8 +306,6 @@ def build_tree(color, board, depth):
     """
     current_score = get_score(color, board)
 
-    memory = {}
-
     def internal_evaluate(current_board, current_depth, current_score,
                           current_color):
         """
@@ -334,18 +332,12 @@ def build_tree(color, board, depth):
 
             unplay_infos = play(move['from'], move['to'], current_board)
 
-            new_hash = str(current_depth - 1) + my_hash(current_board,
-                                                        enemy(current_color))
-            if new_hash in memory:
-                next_list, next_status = memory[new_hash]
-            else:
-                next_list, next_status = internal_evaluate(
-                    current_board,
-                    current_depth - 1,
-                    move['score'],
-                    enemy(current_color),
-                )
-                memory[new_hash] = (next_list, next_status)
+            next_list, next_status = internal_evaluate(
+                current_board,
+                current_depth - 1,
+                move['score'],
+                enemy(current_color),
+            )
 
             if next_status == 'checkmate':
                 # +/- 1000 if you win / lose
