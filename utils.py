@@ -155,8 +155,18 @@ def play(start, arrival, board):
     Puts piece located at start at arrival position, MODIFIES board
     TODO: add piece creation
     """
-    board[arrival[0]][arrival[1]] = board[start[0]][start[1]]
+    former_start = board[start[0]][start[1]]
+    former_arrival = board[arrival[0]][arrival[1]]
+    board[arrival[0]][arrival[1]] = former_start
     board[start[0]][start[1]] = {'color': 'blank'}
+    return start, former_start, arrival, former_arrival
+
+def unplay(pos_start, former_start, pos_arrival, former_arrival, board):
+    """
+    Undo the efect of the play() function. MODIFIES board
+    """
+    board[pos_start[0]][pos_start[1]] = former_start
+    board[pos_arrival[0]][pos_arrival[1]] = former_arrival
 
 def score_per_play(arrival, board):
     """
@@ -273,70 +283,7 @@ def all_available_movements(color, board, current_score, pos_score=True):
                     })
     return to_return
 
-def build_tree_old(color, board, depth=4, seen=set()):
-    """
-    Constructs a tree of possible actions
-    """
-    current_score = get_score(color, board)
-    current_board = deepcopy(board)
-
-    def internal_evaluate(current_board, current_depth, current_score,
-                          current_color, counter):
-        """
-        Returns (list of next moves, status ['normal', 'checkmate', 'draw'],
-        new counter)
-        """
-        if current_depth == 0:
-            return [], 'normal', counter + 1
-        new_count = counter
-        moves = all_available_movements(current_color, current_board,
-                                        current_score, current_color == color)
-
-        # Treat checkmate and draw cases
-        if len(moves) == 0:
-            if is_check(current_color, current_board):
-                return [], 'checkmate', counter + 1
-            return [], 'draw', counter + 1
-
-        # Positive if we are current color is hero's one
-        sign = 2 * int(current_color == color) - 1
-        for n, move in enumerate(moves):
-
-            if current_depth == depth:
-                print('{}/{}'.format(n+1, len(moves)))
-
-            _board = deepcopy(current_board)
-            seen.add(my_hash(_board, current_color))
-            play(move['from'], move['to'], _board)
-
-            next_list, next_status, new_count = internal_evaluate(
-                _board, current_depth - 1,
-                move['score'],
-                enemy(current_color),
-                new_count
-            )
-            if next_status == 'checkmate':
-                # +/- 1000 if you win / lose
-                move['score'] = sign * 1000
-            elif next_status == 'draw':
-                # 0 if you get a draw (worth if you are late in points)
-                move['score'] = 0
-            else:
-                if len(next_list) != 0:
-                    if sign > 0:
-                        move['score'] = min([elt['score'] for elt in next_list])
-                    else:
-                        move['score'] = max([elt['score'] for elt in next_list])
-            move['next'] = next_list
-        return moves, 'normal', new_count
-
-    tr, _, ct = internal_evaluate(current_board, depth, current_score, color, 0)
-    print('Total Explored: {}'.format(ct))
-    print('Total Unique: {}'.format(len(seen)))
-    return tr
-
-
-def build_tree(color, board, depth=4):
+def build_tree(color, board, depth):
     """
     Constructs a tree of possible actions
     """
@@ -369,16 +316,15 @@ def build_tree(color, board, depth=4):
             if current_depth == depth:
                 print('{}/{}'.format(n+1, len(moves)))
 
-            _board = deepcopy(current_board)
-            play(move['from'], move['to'], _board)
+            unplay_infos = play(move['from'], move['to'], current_board)
 
-            new_hash = str(current_depth - 1) + my_hash(_board,
+            new_hash = str(current_depth - 1) + my_hash(current_board,
                                                         enemy(current_color))
             if new_hash in memory:
                 next_list, next_status = memory[new_hash]
             else:
                 next_list, next_status = internal_evaluate(
-                    _board,
+                    current_board,
                     current_depth - 1,
                     move['score'],
                     enemy(current_color),
@@ -398,6 +344,9 @@ def build_tree(color, board, depth=4):
                     else:
                         move['score'] = max([elt['score'] for elt in next_list])
             move['next'] = next_list
+
+            unplay(*unplay_infos, board=current_board)
+
         return moves, 'normal'
 
     t1 = time()
