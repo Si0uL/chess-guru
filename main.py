@@ -11,6 +11,11 @@ TURN = 'white'
 SCORE = get_score('white', BOARD)
 DEPTH = 4
 
+"""
+with open('2_turn_checkmate.p', 'rb') as _file:
+    BOARD = pickle.load(_file)
+"""
+
 @app.route('/')
 def index():
     return render_template('index.html', board=BOARD, highlight=HIGHLIGHTED,

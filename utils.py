@@ -1,4 +1,3 @@
-from copy import deepcopy
 from time import time
 
 def available_movements_raw(location, board):
@@ -142,12 +141,14 @@ def available_movements(location, board):
     """
     to_return = []
     amv = available_movements_raw(location, board)
-    for nr, nc in amv:
-        new_board = deepcopy(board)
-        new_board[nr][nc] = new_board[location[0]][location[1]]
-        new_board[location[0]][location[1]] = {'color': 'blank'}
-        if not is_check(board[location[0]][location[1]]['color'], new_board):
-            to_return.append((nr, nc))
+    for arrival in amv:
+        color = board[location[0]][location[1]]['color']
+        unplay_infos = play(location, arrival, board)
+
+        if not is_check(color, board):
+            to_return.append(arrival)
+
+        unplay(*unplay_infos, board=board)
     return to_return
 
 def play(start, arrival, board):
@@ -288,7 +289,6 @@ def build_tree(color, board, depth):
     Constructs a tree of possible actions
     """
     current_score = get_score(color, board)
-    current_board = deepcopy(board)
 
     memory = {}
 
@@ -350,7 +350,7 @@ def build_tree(color, board, depth):
         return moves, 'normal'
 
     t1 = time()
-    tr, _ = internal_evaluate(current_board, depth, current_score, color)
+    tr, _ = internal_evaluate(board, depth, current_score, color)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr
