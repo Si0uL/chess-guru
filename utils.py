@@ -14,7 +14,7 @@ def available_movements_raw(location, board):
         """
         _tr = []
         for r, c in location_list:
-            if not (max(r, c) > 7 or min(r, c) < 0):
+            if not (r > 7 or c > 7 or r < 0 or c < 0):
                 _tr.append((r, c))
         return _tr
 
