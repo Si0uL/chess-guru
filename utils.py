@@ -7,45 +7,35 @@ def available_movements_raw(location, board):
     WARNING: does not take into account check
     TODO: add castling and en-passant
     """
-    def remove_out_of_board(location_list):
-        """
-        (auxiliary) Remove out of board positions from a list of tuples and
-        and return the new list
-        """
-        _tr = []
-        for r, c in location_list:
-            if not (r > 7 or c > 7 or r < 0 or c < 0):
-                _tr.append((r, c))
-        return _tr
 
     to_return = []
     typ = board[location[0]][location[1]].get('type')
     col = board[location[0]][location[1]]['color']
+
     if typ == 'pawn':
         # black: +1 / white: -1
         _sense = int(col == 'black')*2 - 1
-        to_add = [
-            (location[0] + _sense, location[1] - 1),
-            (location[0] + _sense, location[1]),
-            (location[0] + _sense, location[1] + 1),
-        ]
-        if col == 'white' and location[0] == 6:
-            to_add.append((4, location[1]))
-        elif col == 'black' and location[0] == 1:
-            to_add.append((3, location[1]))
-        to_add = remove_out_of_board(to_add)
-        for r, c in to_add:
-            # going straight
-            if c == location[1] and \
-                board[location[0] + _sense][c]['color'] == 'blank' and \
-                board[r][c]['color'] == 'blank':
-                to_return.append((r, c))
-            # killing an enemy piece
-            elif c != location[1] and board[r][c]['color'] != col and \
-                board[r][c]['color'] != 'blank':
-                to_return.append((r, c))
+
+        # Straight
+        if board[location[0] + _sense][location[1]]['color'] == 'blank':
+            to_return.append((location[0] + _sense, location[1]))
+            # 2 straight
+            if location[0] == 6 and col == 'white' and \
+                board[4][location[1]]['color'] == 'blank':
+                to_return.append((4, location[1]))
+            elif location[0] == 1 and col == 'black' and \
+                board[3][location[1]]['color'] == 'blank':
+                to_return.append((3, location[1]))
             else:
                 pass
+        # Kill an enemy (left)
+        if location[1] != 0 and \
+            board[location[0] + _sense][location[1] - 1]['color'] == enemy(col):
+            to_return.append((location[0] + _sense, location[1] - 1))
+        # Kill an enemy (right)
+        if location[1] != 7 and \
+            board[location[0] + _sense][location[1] + 1]['color'] == enemy(col):
+            to_return.append((location[0] + _sense, location[1] + 1))
 
     if typ == 'rook' or typ == 'queen':
         # down
@@ -112,25 +102,21 @@ def available_movements_raw(location, board):
             to_return.append((r, c))
 
     if typ == 'knight':
-        to_add = []
         for addr, addc in [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
-                           (1, -2), (-1, -2),]:
-            to_add.append((location[0] + addr, location[1] + addc))
-        to_add = remove_out_of_board(to_add)
-        for r, c in to_add:
-            if board[r][c]['color'] != col:
-                to_return.append((r, c))
+                           (1, -2), (-1, -2)]:
+            nr, nc = location[0] + addr, location[1] + addc
+            if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
+                board[nr][nc]['color'] != col:
+                to_return.append((nr, nc))
 
     if typ == 'king':
-        to_add = []
         for addr in range(-1, 2):
             for addc in range(-1, 2):
                 if not (addr == 0 and addc == 0):
-                    to_add.append((location[0] + addr, location[1] + addc))
-        to_add = remove_out_of_board(to_add)
-        for r, c in to_add:
-            if board[r][c]['color'] != col:
-                to_return.append((r, c))
+                    nr, nc = location[0] + addr, location[1] + addc
+                    if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
+                        board[nr][nc]['color'] != col:
+                        to_return.append((nr, nc))
 
     return to_return
 
@@ -362,3 +348,14 @@ def build_tree(color, board, depth):
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr
+
+def array_board(board):
+    """
+    Returns an old-type board constructed as a matrix
+    """
+    to_return = [[{"color": "blank"} for _ in range(8)] for _ in range(8)]
+    for color in ['white', 'black']:
+        for typ in ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']:
+            for r, c in board[color][typ]:
+                to_return[r][c] = {'color': color, 'type': typ}
+    return to_return
