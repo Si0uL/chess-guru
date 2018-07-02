@@ -124,14 +124,20 @@ def available_movements(location, board):
     """
     Take a departure location and a board and returns a list of possible arrival
     positions, using available_movements_raw, but taking check into account
+    fast_is_check only works if the king isn't moved and you are not already
+    check
     """
     to_return = []
+    color = board[location[0]][location[1]]['color']
+    checker = fast_is_check
+    if board[location[0]][location[1]]['type'] == 'king' or \
+        is_check(color, board):
+        checker = is_check
     amv = available_movements_raw(location, board)
     for arrival in amv:
-        color = board[location[0]][location[1]]['color']
         unplay_infos = play(location, arrival, board)
 
-        if not fast_is_check(color, board):
+        if not checker(color, board):
             to_return.append(arrival)
 
         unplay(*unplay_infos, board=board)
@@ -204,7 +210,8 @@ def fast_is_check(color, board):
     """
     Quicker version of is_check, as designed to be used in available_movements
     to remove potential movements that will lead to a check against a player.
-    Thus, only enemy queen, rooks and bishops need to be checked
+    If you are not already in check, and it is not the king that is moved,
+    only enemy queen, rooks and bishops need to be checked
     """
     target_col = enemy(color)
     kpos = king_position(color, board)
