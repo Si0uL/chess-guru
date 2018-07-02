@@ -145,7 +145,7 @@ def available_movements(location, board):
         color = board[location[0]][location[1]]['color']
         unplay_infos = play(location, arrival, board)
 
-        if not is_check(color, board):
+        if not fast_is_check(color, board):
             to_return.append(arrival)
 
         unplay(*unplay_infos, board=board)
@@ -206,11 +206,27 @@ def is_check(color, board):
     or not
     """
     target_col = enemy(color)
-    kr, kc = king_position(color, board)
+    kpos = king_position(color, board)
     for r, row in enumerate(board):
         for c, p in enumerate(row):
             if p['color'] == target_col and \
-                (kr, kc) in available_movements_raw((r, c), board):
+                kpos in available_movements_raw((r, c), board):
+                return True
+    return False
+
+def fast_is_check(color, board):
+    """
+    Quicker version of is_check, as designed to be used in available_movements
+    to remove potential movements that will lead to a check against a player.
+    Thus, only enemy queen, rooks and bishops need to be checked
+    """
+    target_col = enemy(color)
+    kpos = king_position(color, board)
+    for r, row in enumerate(board):
+        for c, p in enumerate(row):
+            if p['color'] == target_col and \
+                p['type'] in ['queen', 'rook', 'bishop'] and\
+                kpos in available_movements_raw((r, c), board):
                 return True
     return False
 
