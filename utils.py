@@ -1,4 +1,5 @@
 from time import time
+from copy import deepcopy
 
 def available_movements_raw(location, board):
     """
@@ -342,6 +343,9 @@ def build_tree(color, board, depth):
                 if len(next_list) != 0:
                     if sign > 0:
                         move['score'] = min([elt['score'] for elt in next_list])
+                        if move['score'] == 1000:
+                            unplay(*unplay_infos, board=current_board)
+                            break
                     else:
                         move['score'] = max([elt['score'] for elt in next_list])
             move['next'] = next_list
@@ -351,7 +355,7 @@ def build_tree(color, board, depth):
         return moves, 'normal'
 
     t1 = time()
-    tr, _ = internal_evaluate(board, depth, current_score, color)
+    tr, _ = internal_evaluate(deepcopy(board), depth, current_score, color)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr

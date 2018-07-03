@@ -1,7 +1,7 @@
 import pickle
 from board import BOARD
 from flask import Flask, render_template, url_for, redirect
-from utils import available_movements, is_check_mate, get_score, build_tree
+from utils import available_movements, get_score, build_tree, play
 
 app = Flask(__name__)
 
@@ -42,7 +42,7 @@ def show_moves(subpath):
     return redirect('/')
 
 @app.route('/play/<path:subpath>')
-def play(subpath):
+def play_route(subpath):
     _split = subpath.split('/')
     assert len(_split) == 4
     srow, scol, arow, acol = _split
@@ -50,8 +50,7 @@ def play(subpath):
     arow, acol = int(arow), int(acol)
 
     # Move the piece
-    BOARD[arow][acol] = BOARD[srow][scol]
-    BOARD[srow][scol] = {'color': 'blank'}
+    play((srow, scol), (arow, acol), BOARD)
     # empty HIGHLIGHTED
     for _ in range(len(HIGHLIGHTED)):
         del HIGHLIGHTED[0]
