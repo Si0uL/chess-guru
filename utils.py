@@ -153,6 +153,9 @@ def play(start, arrival, board):
     former_arrival = board[arrival[0]][arrival[1]]
     board[arrival[0]][arrival[1]] = former_start
     board[start[0]][start[1]] = {'color': 'blank'}
+    # If pawn at edge: transform it into a queen by default
+    if former_start['type'] == 'pawn':
+        board[arrival[0]][arrival[1]]['type'] = 'queen'
     return start, former_start, arrival, former_arrival
 
 def unplay(pos_start, former_start, pos_arrival, former_arrival, board):
@@ -301,24 +304,34 @@ def build_tree(color, board, depth):
     current_score = get_score(color, board)
 
     def internal_evaluate(current_board, current_depth, current_score,
-                          current_color):
+                          current_color, alpha, beta):
         """
         Returns (list of next moves, status ['normal', 'checkmate', 'draw'],
         new counter)
         """
         if current_depth == 0:
-            return [], 'normal'
+            return [], current_score, -1
         moves = all_available_movements(current_color, current_board,
                                         current_score, current_color == color)
+
+        # Positive if current color is hero's one
+        sign = 2 * int(current_color == color) - 1
 
         # Treat checkmate and draw cases
         if len(moves) == 0:
             if is_check(current_color, current_board):
-                return [], 'checkmate'
-            return [], 'draw'
+                return [], -sign*1000, -1
+            return [], 0, -1
 
-        # Positive if we are current color is hero's one
-        sign = 2 * int(current_color == color) - 1
+        new_alpha, new_beta = alpha, beta
+
+        if sign == 1:
+            nu = -5000
+        else:
+            nu = 5000
+
+        best_index = -1
+
         for n, move in enumerate(moves):
 
             if current_depth == depth:
@@ -326,39 +339,44 @@ def build_tree(color, board, depth):
 
             unplay_infos = play(move['from'], move['to'], current_board)
 
-            next_list, next_status = internal_evaluate(
+            next_list, next_nu, _ = internal_evaluate(
                 current_board,
                 current_depth - 1,
                 move['score'],
                 enemy(current_color),
+                new_alpha,
+                new_beta,
             )
 
-            if next_status == 'checkmate':
-                # +/- 1000 if you win / lose
-                move['score'] = sign * 1000
-            elif next_status == 'draw':
-                # 0 if you get a draw (worth if you are late in points)
-                move['score'] = 0
-            else:
-                if len(next_list) != 0:
-                    if sign > 0:
-                        move['score'] = min([elt['score'] for elt in next_list])
-                        if move['score'] == 1000:
-                            unplay(*unplay_infos, board=current_board)
-                            break
-                    else:
-                        move['score'] = max([elt['score'] for elt in next_list])
             move['next'] = next_list
+
+            # Hero play (maximiser)
+            if sign == 1 and next_nu > nu:
+                nu = next_nu
+                best_index = n
+            if sign == -1 and next_nu < nu:
+                nu = next_nu
+                best_index = n
+
+            # update alpha, beta (avoiding using min/max)
+            if sign == 1 and new_alpha < nu:
+                new_alpha = next_nu
+            if sign == -1 and new_beta > nu:
+                new_beta = next_nu
 
             unplay(*unplay_infos, board=current_board)
 
-        return moves, 'normal'
+            if new_alpha >= new_beta:
+                break
+
+        return moves, nu, best_index
 
     t1 = time()
-    tr, _ = internal_evaluate(deepcopy(board), depth, current_score, color)
+    tr, _, best_index = internal_evaluate(deepcopy(board), depth, current_score,
+                                          color, -5000, 5000)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
-    return tr
+    return tr, best_index
 
 def array_board(board):
     """

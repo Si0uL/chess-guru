@@ -71,13 +71,7 @@ def autoplay():
 
     # find the best move
     global TURN
-    tree = build_tree(TURN, BOARD, DEPTH)
-    best_score = -5000
-    best_index = -1
-    for idx, move in enumerate(tree):
-        if best_score < move['score']:
-            best_score = move['score']
-            best_index = idx
+    tree, best_index = build_tree(TURN, BOARD, DEPTH)
 
     # Get departure/arrival positions
     srow, scol = tree[best_index]['from']

@@ -1,17 +1,12 @@
 import pickle
 from utils import *
 
-with open('complex.p', 'rb') as _file:
+with open('2_turn_checkmate.p', 'rb') as _file:
     board = pickle.load(_file)
 
-tree = build_tree('white', board, 4)
+tree, best_index = build_tree('white', board, 6)
 
-_max = -5000
-best_elt = {}
-for n, elt in enumerate(tree):
-    if elt['score'] > _max:
-        _max = elt['score']
-        best_elt = elt
+best_elt = tree[best_index]
 
 print("Best move: {} {} -> {}".format(
     board[best_elt['from'][0]][best_elt['from'][1]]['type'],
