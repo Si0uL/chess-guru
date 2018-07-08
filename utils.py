@@ -380,14 +380,3 @@ def build_tree(color, board, depth):
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr, best_index
-
-def array_board(board):
-    """
-    Returns an old-type board constructed as a matrix
-    """
-    to_return = [[{"color": "blank"} for _ in range(8)] for _ in range(8)]
-    for color in ['white', 'black']:
-        for typ in ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king']:
-            for r, c in board[color][typ]:
-                to_return[r][c] = {'color': color, 'type': typ}
-    return to_return
