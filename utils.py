@@ -335,6 +335,10 @@ def build_tree(color, board, depth):
 
         best_index = -1
 
+        if depth - current_depth < 4:
+            sort_by_interest(moves, current_color, current_color == color,
+                             current_board)
+
         for n, move in enumerate(moves):
 
             if current_depth == depth:
@@ -380,3 +384,36 @@ def build_tree(color, board, depth):
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr, best_index
+
+def readable_position(pos):
+    """
+    Converts tuple to readable chess position:
+    example: (6, 3) -> "d2"
+    """
+    return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'][pos[1]] + str(8 - pos[0])
+
+def sort_by_interest(tree, color, maximize, board):
+    """
+    Unefficient function to sort nodes from a tree in order of potential
+    interest (check positions first, then enemy pieces killing)
+    """
+    _sorted = 0
+    # Checkers first
+    for n, elt in enumerate(tree):
+        unplay_data = play(elt['from'], elt['to'], board)
+        if is_check(enemy(color), board):
+            tree[_sorted], tree[n] = tree[n], tree[_sorted]
+            _sorted += 1
+        unplay(*unplay_data, board=board)
+    # Basic sorting method by direct score (kills first !)
+    for i in range(_sorted, len(tree)):
+        _idx = i
+        _max_or_min = tree[i]['score']
+        for j in range(i + 1, len(tree)):
+            if maximize and tree[j]['score'] > _max_or_min:
+                _max_or_min = tree[j]['score']
+                _idx = j
+            if (not maximize) and tree[j]['score'] > _max_or_min:
+                _max_or_min = tree[j]['score']
+                _idx = j
+        tree[i], tree[_idx] = tree[_idx], tree[i]
