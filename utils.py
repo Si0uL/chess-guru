@@ -154,8 +154,12 @@ def play(start, arrival, board):
     board[arrival[0]][arrival[1]] = former_start
     board[start[0]][start[1]] = {'color': 'blank'}
     # If pawn at edge: transform it into a queen by default
-    if former_start['type'] == 'pawn':
-        board[arrival[0]][arrival[1]]['type'] = 'queen'
+    if former_start['type'] == 'pawn' and (arrival[0] == 0 or arrival[0] == 7):
+        # Recreate an object to avoid side effects
+        board[arrival[0]][arrival[1]] = {
+            'type': 'queen',
+            'color': former_start['color'],
+        }
     return start, former_start, arrival, former_arrival
 
 def unplay(pos_start, former_start, pos_arrival, former_arrival, board):
@@ -306,8 +310,7 @@ def build_tree(color, board, depth):
     def internal_evaluate(current_board, current_depth, current_score,
                           current_color, alpha, beta):
         """
-        Returns (list of next moves, status ['normal', 'checkmate', 'draw'],
-        new counter)
+        Returns subtree, current_lambda, best_index
         """
         if current_depth == 0:
             return [], current_score, -1
@@ -359,9 +362,9 @@ def build_tree(color, board, depth):
                 best_index = n
 
             # update alpha, beta (avoiding using min/max)
-            if sign == 1 and new_alpha < nu:
+            if sign == 1 and nu > new_alpha:
                 new_alpha = next_nu
-            if sign == -1 and new_beta > nu:
+            if sign == -1 and nu < new_beta:
                 new_beta = next_nu
 
             unplay(*unplay_infos, board=current_board)
