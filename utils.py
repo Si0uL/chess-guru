@@ -13,31 +13,6 @@ def available_movements_raw(location, board):
     typ = board[location[0]][location[1]].get('type')
     col = board[location[0]][location[1]]['color']
 
-    if typ == 'pawn':
-        # black: +1 / white: -1
-        _sense = int(col == 'black')*2 - 1
-
-        # Straight
-        if board[location[0] + _sense][location[1]]['color'] == 'blank':
-            to_return.append((location[0] + _sense, location[1]))
-            # 2 straight
-            if location[0] == 6 and col == 'white' and \
-                board[4][location[1]]['color'] == 'blank':
-                to_return.append((4, location[1]))
-            elif location[0] == 1 and col == 'black' and \
-                board[3][location[1]]['color'] == 'blank':
-                to_return.append((3, location[1]))
-            else:
-                pass
-        # Kill an enemy (left)
-        if location[1] != 0 and \
-            board[location[0] + _sense][location[1] - 1]['color'] == enemy(col):
-            to_return.append((location[0] + _sense, location[1] - 1))
-        # Kill an enemy (right)
-        if location[1] != 7 and \
-            board[location[0] + _sense][location[1] + 1]['color'] == enemy(col):
-            to_return.append((location[0] + _sense, location[1] + 1))
-
     if typ == 'rook' or typ == 'queen':
         # down
         r, c = location[0] + 1, location[1]
@@ -102,15 +77,41 @@ def available_movements_raw(location, board):
         if r < 8 and c > -1 and board[r][c]['color'] != col:
             to_return.append((r, c))
 
-    if typ == 'knight':
-        for addr, addc in [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
-                           (1, -2), (-1, -2)]:
+    elif typ == 'pawn':
+        # black: +1 / white: -1
+        _sense = int(col == 'black')*2 - 1
+
+        # Straight
+        if board[location[0] + _sense][location[1]]['color'] == 'blank':
+            to_return.append((location[0] + _sense, location[1]))
+            # 2 straight
+            if location[0] == 6 and col == 'white' and \
+                board[4][location[1]]['color'] == 'blank':
+                to_return.append((4, location[1]))
+            elif location[0] == 1 and col == 'black' and \
+                board[3][location[1]]['color'] == 'blank':
+                to_return.append((3, location[1]))
+            else:
+                pass
+        # Kill an enemy (left)
+        if location[1] != 0 and \
+            board[location[0] + _sense][location[1] - 1]['color'] == enemy(col):
+            to_return.append((location[0] + _sense, location[1] - 1))
+        # Kill an enemy (right)
+        if location[1] != 7 and \
+            board[location[0] + _sense][location[1] + 1]['color'] == enemy(col):
+            to_return.append((location[0] + _sense, location[1] + 1))
+
+    elif typ == 'knight':
+        knight_moves = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
+                        (1, -2), (-1, -2)]
+        for addr, addc in knight_moves:
             nr, nc = location[0] + addr, location[1] + addc
             if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
                 board[nr][nc]['color'] != col:
                 to_return.append((nr, nc))
 
-    if typ == 'king':
+    elif typ == 'king':
         for addr in range(-1, 2):
             for addc in range(-1, 2):
                 if not (addr == 0 and addc == 0):
@@ -351,6 +352,7 @@ def build_tree(color, board, depth):
 
             if current_depth == depth:
                 print('{}/{}'.format(n+1, len(moves)))
+                print('{}%'.format(int(100*n/len(moves))), end='\r')
 
             unplay_infos = play(move['from'], move['to'], current_board)
 
