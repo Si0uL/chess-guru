@@ -269,7 +269,7 @@ def get_score(color, board):
         'rook': 5,
         'knight': 3,
         'bishop': 3,
-        'queen': 7,
+        'queen': 9,
     }
     to_return = 0
     for row in board:
@@ -292,12 +292,16 @@ def all_available_movements(color, board, current_score, pos_score=True):
             if piece['color'] == color:
                 amv = available_movements((r, c), board)
                 for nr, nc in amv:
+                    new_score = current_score + \
+                        score_per_play((nr, nc), board)*(2*int(pos_score)-1)
+                    # Bring a pawn to the edge -> +/- 8
+                    if piece['type'] == 'pawn' and (nr == 0 or nr == 7):
+                        new_score += 8 * (2*int(pos_score)-1)
                     to_return.append({
                         'from': (r, c),
                         'to': (nr, nc),
                         'next': [],
-                        'score': current_score + \
-                            score_per_play((nr, nc), board)*(2*int(pos_score)-1)
+                        'score': new_score,
                     })
     return to_return
 
