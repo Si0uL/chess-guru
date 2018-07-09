@@ -1,7 +1,14 @@
 import pickle
 from board import BOARD
 from flask import Flask, render_template, url_for, redirect
-from utils import available_movements, get_score, build_tree, play
+from utils import (
+    available_movements,
+    get_score,
+    build_tree,
+    play,
+    is_check_mate_or_draw,
+    enemy,
+)
 
 app = Flask(__name__)
 
@@ -18,8 +25,15 @@ with open('2_turn_checkmate.p', 'rb') as _file:
 
 @app.route('/')
 def index():
+    message = "{}'s turn".format(TURN.title())
+    is_ended, end_type = is_check_mate_or_draw(TURN, BOARD)
+    if is_ended and end_type == 'mate':
+        message = 'Check Mate ! {} wins.'.format(enemy(TURN).title())
+    if is_ended and end_type == 'draw':
+        message = 'Match ends: draw'
     return render_template('index.html', board=BOARD, highlight=HIGHLIGHTED,
-                           selected=SELECTED, turn=TURN, score=SCORE)
+                           selected=SELECTED, turn=TURN, score=SCORE,
+                           message=message)
 
 @app.route('/moves/<path:subpath>')
 def show_moves(subpath):

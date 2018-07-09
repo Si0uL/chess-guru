@@ -231,12 +231,16 @@ def fast_is_check(color, board):
                 return True
     return False
 
-def is_check_mate(color, board):
+def is_check_mate_or_draw(color, board):
     """
     Tests if a situation is a checkmate or a draw
     """
-    return is_check(color, board) and \
-        all_available_movements(color, board, 0) == []
+    if all_available_movements(color, board, 0) == []:
+        if is_check(color, board):
+            return True, 'mate'
+        return True, 'draw'
+    return False, ''
+
 
 def my_hash(board, turn):
     """
