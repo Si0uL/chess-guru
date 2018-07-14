@@ -181,7 +181,7 @@ def score_per_play(arrival, board):
         'rook': 5,
         'knight': 3,
         'bishop': 3,
-        'queen': 7,
+        'queen': 9,
     }
     return values.get(board[arrival[0]][arrival[1]].get('type'), 0)
 
