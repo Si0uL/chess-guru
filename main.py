@@ -1,6 +1,6 @@
 import pickle
 from board import BOARD
-from flask import Flask, render_template, url_for, redirect
+from flask import Flask, render_template, redirect
 from utils import (
     available_movements,
     get_score,
@@ -8,6 +8,7 @@ from utils import (
     play,
     is_check_mate_or_draw,
     enemy,
+    update_castling,
 )
 
 app = Flask(__name__)
@@ -17,9 +18,19 @@ SELECTED = []
 TURN = 'white'
 SCORE = get_score('white', BOARD)
 DEPTH = 4
+CASTLING = {
+    'white': {
+        'left': True,
+        'right': True,
+    },
+    'black': {
+        'left': True,
+        'right': True,
+    }
+}
 
 """
-with open('2_turn_checkmate.p', 'rb') as _file:
+with open('board.p', 'rb') as _file:
     BOARD = pickle.load(_file)
 """
 
@@ -42,7 +53,8 @@ def show_moves(subpath):
     row, col = _split
     row = int(row)
     col = int(col)
-    to_highlight = available_movements((row, col), BOARD)
+    to_highlight = available_movements((row, col), BOARD, CASTLING[TURN]['left'],
+                                       CASTLING[TURN]['right'])
     # replace HIGHLIGHTED by to_highlight
     for _ in range(len(HIGHLIGHTED)):
         del HIGHLIGHTED[0]
@@ -78,6 +90,14 @@ def play_route(subpath):
     global SCORE
     SCORE = get_score('white', BOARD)
 
+    # Update CASTLING
+    CASTLING[TURN]['left'], CASTLING[TURN]['right'] = update_castling(
+        (srow, scol),
+        TURN,
+        CASTLING[TURN]['left'],
+        CASTLING[TURN]['right'],
+    )
+
     return redirect('/')
 
 @app.route('/autoplay')
@@ -85,7 +105,8 @@ def autoplay():
 
     # find the best move
     global TURN
-    tree, best_index = build_tree(TURN, BOARD, DEPTH)
+    tree, best_index = build_tree(TURN, BOARD, DEPTH, CASTLING[TURN]['left'],
+                                  CASTLING[TURN]['right'])
 
     # Get departure/arrival positions
     srow, scol = tree[best_index]['from']
@@ -104,6 +125,13 @@ def autoplay():
     # Change score
     global SCORE
     SCORE = get_score('white', BOARD)
+
+    CASTLING[TURN]['left'], CASTLING[TURN]['right'] = update_castling(
+        (srow, scol),
+        TURN,
+        CASTLING[TURN]['left'],
+        CASTLING[TURN]['right'],
+    )
 
     return redirect('/')
 

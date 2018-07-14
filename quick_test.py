@@ -4,7 +4,7 @@ from utils import *
 with open('unefficient.p', 'rb') as _file:
     board = pickle.load(_file)
 
-tree, best_index = build_tree('black', board, 4)
+tree, best_index = build_tree('white', board, 4, True, True)
 
 best_elt = tree[best_index]
 
