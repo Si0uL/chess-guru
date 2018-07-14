@@ -92,8 +92,7 @@ def autoplay():
     arow, acol = tree[best_index]['to']
 
     # Move the piece
-    BOARD[arow][acol] = BOARD[srow][scol]
-    BOARD[srow][scol] = {'color': 'blank'}
+    play((srow, scol), (arow, acol), BOARD)
     # empty HIGHLIGHTED
     for _ in range(len(HIGHLIGHTED)):
         del HIGHLIGHTED[0]
