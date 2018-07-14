@@ -351,7 +351,13 @@ def build_tree(color, board, depth):
         for n, move in enumerate(moves):
 
             if current_depth == depth:
-                print('{}/{}'.format(n+1, len(moves)))
+                print('{}/{} {} {} -> {}'.format(
+                    str(n+1).zfill(2),
+                    len(moves),
+                    current_board[move['from'][0]][move['from'][1]]['type'],
+                    move['from'],
+                    move['to'],
+                ))
                 print('{}%'.format(int(100*n/len(moves))), end='\r')
 
             unplay_infos = play(move['from'], move['to'], current_board)
