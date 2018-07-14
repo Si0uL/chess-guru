@@ -112,28 +112,7 @@ def autoplay():
     srow, scol = tree[best_index]['from']
     arow, acol = tree[best_index]['to']
 
-    # Move the piece
-    play((srow, scol), (arow, acol), BOARD)
-    # empty HIGHLIGHTED
-    for _ in range(len(HIGHLIGHTED)):
-        del HIGHLIGHTED[0]
-    # empty SELECTED
-    for _ in range(len(SELECTED)):
-        del SELECTED[0]
-    # Change player up next
-    TURN = {'white': 'black', 'black': 'white'}[TURN]
-    # Change score
-    global SCORE
-    SCORE = get_score('white', BOARD)
-
-    CASTLING[TURN]['left'], CASTLING[TURN]['right'] = update_castling(
-        (srow, scol),
-        TURN,
-        CASTLING[TURN]['left'],
-        CASTLING[TURN]['right'],
-    )
-
-    return redirect('/')
+    return redirect('/play/{}/{}/{}/{}'.format(srow, scol, arow, acol))
 
 @app.route('/save')
 def save_board():
