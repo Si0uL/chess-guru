@@ -544,8 +544,8 @@ def sort_by_interest(tree, color, maximize, board, randomize=False,
 def update_castling(start, color, castling_left, castling_right):
     new_cl, new_cr = castling_left, castling_right
     row = {'white': 7, 'black': 0}[color]
-    if castling_left and start[1] == row and (start[0] == 4 or start[0] == 0):
+    if castling_left and start[0] == row and (start[1] == 4 or start[1] == 0):
         new_cl = False
-    if castling_right and start[1] == row and (start[0] == 4 or start[0] == 7):
+    if castling_right and start[0] == row and (start[1] == 4 or start[1] == 7):
         new_cr = False
     return new_cl, new_cr

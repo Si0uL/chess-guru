@@ -83,20 +83,21 @@ def play_route(subpath):
     # empty SELECTED
     for _ in range(len(SELECTED)):
         del SELECTED[0]
-    # Change player up next
-    global TURN
-    TURN = {'white': 'black', 'black': 'white'}[TURN]
     # Change score
     global SCORE
     SCORE = get_score('white', BOARD)
 
     # Update CASTLING
+    global TURN
     CASTLING[TURN]['left'], CASTLING[TURN]['right'] = update_castling(
         (srow, scol),
         TURN,
         CASTLING[TURN]['left'],
         CASTLING[TURN]['right'],
     )
+
+    # Change player up next
+    TURN = enemy(TURN)
 
     return redirect('/')
 
