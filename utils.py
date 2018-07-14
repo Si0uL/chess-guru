@@ -374,8 +374,19 @@ def all_available_movements(color, board, current_score, castling_left,
                     if piece['type'] == 'pawn' and (nr == 0 or nr == 7):
                         new_score += 8 * (2*int(pos_score)-1)
                     # Castling: fictive +0.1 bonus
+                    row = {'white': 7, 'black': 0}[color]
                     if piece['type'] == 'king' and abs(nc - c) == 2:
                         new_score += 0.1 * (2*int(pos_score)-1)
+                    # Lose both future castling: fictive -0.1
+                    elif castling_left and not castling_right and \
+                        (r, c) == (row, 0):
+                        new_score -= 0.1 * (2*int(pos_score)-1)
+                    elif castling_right and not castling_left and \
+                        (r, c) == (row, 7):
+                        new_score -= 0.1 * (2*int(pos_score)-1)
+                    elif (castling_right or castling_left) and \
+                        piece['type'] == 'king':
+                        new_score -= 0.1 * (2*int(pos_score)-1)
                     to_return.append({
                         'from': (r, c),
                         'to': (nr, nc),
