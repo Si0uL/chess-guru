@@ -1,5 +1,6 @@
 from time import time
 from copy import deepcopy
+from random import shuffle
 
 def available_movements_raw(location, board):
     """
@@ -346,7 +347,8 @@ def build_tree(color, board, depth):
 
         if depth - current_depth < 4:
             sort_by_interest(moves, current_color, current_color == color,
-                             current_board)
+                             current_board, randomize=depth - current_depth < 2,
+                             danger_first=depth - current_depth < 1)
 
         for n, move in enumerate(moves):
 
@@ -408,11 +410,15 @@ def readable_position(pos):
     """
     return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'][pos[1]] + str(8 - pos[0])
 
-def sort_by_interest(tree, color, maximize, board):
+def sort_by_interest(tree, color, maximize, board, randomize=False,
+                     danger_first=False):
     """
     Unefficient function to sort nodes from a tree in order of potential
     interest (check positions first, then enemy pieces killing)
     """
+    # Randomize first
+    if randomize:
+        shuffle(tree)
     _sorted = 0
     # Checkers first
     for n, elt in enumerate(tree):
@@ -433,3 +439,20 @@ def sort_by_interest(tree, color, maximize, board):
                 _max_or_min = tree[j]['score']
                 _idx = j
         tree[i], tree[_idx] = tree[_idx], tree[i]
+    if danger_first:
+        # Avoid kill first (amongst null scores)
+        # index is to be at the beginning of null score
+        index = len(tree) - 1
+        while index >= 0 and tree[index]['score'] == tree[-1]['score']:
+            index -= 1
+        # List all in danger pieces
+        enemy_moves = all_available_movements(enemy(color), board, 0, True)
+        in_danger = []
+        for elt in enemy_moves:
+            if elt['score'] > 0:
+                in_danger.append(elt['to'])
+        # Put endangered pieces moves first (after other sorted pieces)
+        for idx2 in range(index, len(tree)):
+            if tree[idx2]['from'] in in_danger:
+                tree[index], tree[idx2] = tree[idx2], tree[index]
+                index += 1
