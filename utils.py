@@ -400,6 +400,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
     Constructs a tree of possible actions
     """
     current_score = get_score(color, board)
+    killers = [None for _ in range(depth + 1)]
 
     def internal_evaluate(current_board, current_cl, current_cr, current_depth,
                           current_score, current_color, alpha, beta):
@@ -430,10 +431,16 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
         best_index = -1
 
-        if depth - current_depth < 4:
-            sort_by_interest(moves, current_color, current_color == color,
-                             current_board, randomize=depth - current_depth < 2,
-                             danger_first=depth - current_depth < 1)
+        sort_by_interest(
+            moves,
+            current_color,
+            current_color == color,
+            current_board,
+            randomize=depth - current_depth < 2,
+            danger_first=depth - current_depth < 1,
+            checkers_first=depth - current_depth < 4,
+            killer_move=killers[current_depth],
+        )
 
         for n, move in enumerate(moves):
 
@@ -485,6 +492,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             unplay(*unplay_infos, board=current_board)
 
             if new_alpha >= new_beta:
+                killers[current_depth] = move
                 break
 
         return moves, nu, best_index
@@ -505,7 +513,8 @@ def readable_position(pos):
     return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'][pos[1]] + str(8 - pos[0])
 
 def sort_by_interest(tree, color, maximize, board, randomize=False,
-                     danger_first=False):
+                     danger_first=False, checkers_first=False,
+                     killer_move=None):
     """
     Unefficient function to sort nodes from a tree in order of potential
     interest (check positions first, then enemy pieces killing)
@@ -514,15 +523,24 @@ def sort_by_interest(tree, color, maximize, board, randomize=False,
     if randomize:
         shuffle(tree)
     _sorted = 0
+    # Killer move first
+    if not killer_move is None:
+        for n, elt in enumerate(tree):
+            if elt['from'] == killer_move['from'] and \
+                elt['to'] == killer_move['to']:
+                tree[0], tree[n] = tree[n], tree[0]
+                _sorted += 1
+                break
     # Checkers first
-    for n, elt in enumerate(tree):
-        unplay_data = play(elt['from'], elt['to'], board)
-        if is_check(enemy(color), board):
-            tree[_sorted], tree[n] = tree[n], tree[_sorted]
-            _sorted += 1
-        unplay(*unplay_data, board=board)
+    if checkers_first:
+        for n in range(_sorted + 1, len(tree)):
+            unplay_data = play(tree[n]['from'], tree[n]['to'], board)
+            if is_check(enemy(color), board):
+                tree[_sorted], tree[n] = tree[n], tree[_sorted]
+                _sorted += 1
+            unplay(*unplay_data, board=board)
     # Basic sorting method by direct score (kills first !)
-    for i in range(_sorted, len(tree)):
+    for i in range(_sorted + 1, len(tree)):
         _idx = i
         _max_or_min = tree[i]['score']
         for j in range(i + 1, len(tree)):
