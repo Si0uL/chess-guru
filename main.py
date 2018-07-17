@@ -19,6 +19,7 @@ SELECTED = []
 TURN = 'white'
 SCORE = get_score('white', BOARD)
 DEPTH = 4
+AUTOSAVE = True
 CASTLING = {
     'white': {
         'left': True,
@@ -106,6 +107,18 @@ def play_route(subpath):
     global MISSING
     MISSING = missing_pieces(BOARD)
 
+    # Autosave in board.p on white's turns
+    if AUTOSAVE and TURN == 'white':
+        with open('board.p', 'wb') as _file:
+            pickle.dump(BOARD, _file)
+
+    return redirect('/')
+
+@app.route('/load')
+def load_board():
+    global BOARD
+    with open('board.p', 'rb') as _file:
+        BOARD = pickle.load(_file)
     return redirect('/')
 
 @app.route('/autoplay')
@@ -121,9 +134,3 @@ def autoplay():
     arow, acol = tree[best_index]['to']
 
     return redirect('/play/{}/{}/{}/{}'.format(srow, scol, arow, acol))
-
-@app.route('/save')
-def save_board():
-    with open('board.p', 'wb') as _file:
-        pickle.dump(BOARD, _file)
-    return redirect('/')

@@ -442,9 +442,6 @@ def build_tree(color, board, depth, castling_left, castling_right):
             killer_move=killers[current_depth],
         )
 
-        if current_depth == depth:
-            print(moves)
-
         for n, move in enumerate(moves):
 
             if current_depth == depth:
