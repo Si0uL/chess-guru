@@ -24,8 +24,8 @@
         <h1 class="title" style="text-align:center; margin: 10px 0;">Chess Guru</h1>
 
             <div class="row">
-                <div class="col-xs-6 col-xs-offset-3" style="text-align: center">
-                    <table class="table table-bordered" style="width:auto;">
+                <div class="col-xs-12" style="text-align: center">
+                    <table class="table table-bordered" style="width: auto; margin: auto;">
                         <tbody>
                             {% for r  in range(8) %}
                                 <tr>
@@ -57,12 +57,30 @@
 
                     <br>
 
-                    <div class="body">
-                        {{ message }}
-                    </div>
+                    <div class="row">
 
-                    <div class="body">
-                        White's score: {% if score > 0 %}+ {% endif %}{{ score }}
+                        <div class="col-xs-5 text-right no-padding">
+                            {% for type in missing['black'] %}
+                                <img src="static/img/black-{{ type }}.png" style="width:20px">
+                            {% endfor %}
+                        </div>
+
+                        <div class="col-xs-2 no-padding">
+                            <div class="body">
+                                {{ message }}
+                            </div>
+
+                            <div class="body">
+                                White's score: {% if score > 0 %}+ {% endif %}{{ score }}
+                            </div>
+                        </div>
+
+                        <div class="col-xs-5 text-left no-padding">
+                            {% for type in missing['white'] %}
+                                <img src="static/img/white-{{ type }}.png" style="width:20px">
+                            {% endfor %}
+                        </div>
+
                     </div>
 
                     <br>

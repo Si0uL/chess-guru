@@ -442,6 +442,9 @@ def build_tree(color, board, depth, castling_left, castling_right):
             killer_move=killers[current_depth],
         )
 
+        if current_depth == depth:
+            print(moves)
+
         for n, move in enumerate(moves):
 
             if current_depth == depth:
@@ -578,3 +581,33 @@ def update_castling(start, color, castling_left, castling_right):
     if castling_right and start[0] == row and (start[1] == 4 or start[1] == 7):
         new_cr = False
     return new_cl, new_cr
+
+def missing_pieces(board):
+    """
+    Finds who is missing in the board to show taken pieces
+    """
+    missing = {
+        'black': {
+            'king': 1,
+            'queen': 1,
+            'bishop': 2,
+            'knight': 2,
+            'rook': 2,
+            'pawn': 8,
+        },
+    }
+    missing['white'] = deepcopy(missing['black'])
+    for row in board:
+        for elt in row:
+            if elt['color'] != 'blank':
+                missing[elt['color']][elt['type']] -= 1
+    to_return = {
+        "black": [],
+        "white": [],
+    }
+    for _color in to_return:
+        for _type in ['queen', 'rook', 'bishop', 'knight', 'pawn']:
+            for _ in range(missing[_color][_type]):
+                to_return[_color].append(_type)
+    to_return['black'].reverse()
+    return to_return

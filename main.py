@@ -9,6 +9,7 @@ from utils import (
     is_check_mate_or_draw,
     enemy,
     update_castling,
+    missing_pieces,
 )
 
 app = Flask(__name__)
@@ -34,6 +35,8 @@ with open('board.p', 'rb') as _file:
     BOARD = pickle.load(_file)
 """
 
+MISSING = missing_pieces(BOARD)
+
 @app.route('/')
 def index():
     message = "{}'s turn".format(TURN.title())
@@ -44,7 +47,7 @@ def index():
         message = 'Match ends: draw'
     return render_template('index.html', board=BOARD, highlight=HIGHLIGHTED,
                            selected=SELECTED, turn=TURN, score=SCORE,
-                           message=message)
+                           message=message, missing=MISSING)
 
 @app.route('/moves/<path:subpath>')
 def show_moves(subpath):
@@ -98,6 +101,10 @@ def play_route(subpath):
 
     # Change player up next
     TURN = enemy(TURN)
+
+    # Update MISSING
+    global MISSING
+    MISSING = missing_pieces(BOARD)
 
     return redirect('/')
 
