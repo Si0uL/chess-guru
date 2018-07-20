@@ -579,7 +579,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             current_color == color,
             current_board,
             current_kpos,
-            randomize=depth - current_depth < 2,
+            randomize=depth - current_depth < 0,
             danger_first=depth - current_depth < 4,
             checkers_first=depth - current_depth < 4,
             killer_move=killers[current_depth],
@@ -601,19 +601,21 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
             # Update current_kpos if needed:
             if unplay_infos[1]['type'] == 'king':
+                cached_kpos = current_kpos[current_color]
                 current_kpos[current_color] = unplay_infos[2]
 
             # Update castling infos if needed:
             if unplay_infos[1]['type'] == 'rook' or \
                 unplay_infos[1]['type'] == 'king':
-                current_cl, current_cr = update_castling(move['from'],
-                                                         current_color,
-                                                         current_cl, current_cr)
+                new_cl, new_cr = update_castling(move['from'], current_color,
+                                                 current_cl, current_cr)
+            else:
+                new_cl, new_cr = current_cl, current_cr
 
             next_list, next_nu, _ = internal_evaluate(
                 current_board,
-                current_cl,
-                current_cr,
+                new_cl,
+                new_cr,
                 current_depth - 1,
                 move['score'],
                 current_kpos,
@@ -639,6 +641,10 @@ def build_tree(color, board, depth, castling_left, castling_right):
                 new_beta = next_nu
 
             unplay(*unplay_infos, board=current_board)
+
+            # Undo current_kpos changes if needed:
+            if unplay_infos[1]['type'] == 'king':
+                current_kpos[current_color] = cached_kpos
 
             if new_alpha >= new_beta:
                 killers[current_depth] = move
