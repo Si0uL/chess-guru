@@ -124,7 +124,7 @@ def available_movements_raw(location, board):
     return to_return
 
 def available_movements(location, board, castling_left=False,
-                        castling_right=False):
+                        castling_right=False, kpos=None):
     """
     Take a departure location and a board and returns a list of possible arrival
     positions, using available_movements_raw, but taking check into account
@@ -137,7 +137,7 @@ def available_movements(location, board, castling_left=False,
     for arrival in amv:
         unplay_infos = play(location, arrival, board)
 
-        if not is_check2(color, board):
+        if not is_check2(color, board, kpos):
             to_return.append(arrival)
 
         unplay(*unplay_infos, board=board)
@@ -149,28 +149,30 @@ def available_movements(location, board, castling_left=False,
         # If left castling is available and there is no "obstacle" -> go
         if castling_left and board[row][1]['color'] == 'blank' and \
             board[row][2]['color'] == 'blank' and \
-            board[row][3]['color'] == 'blank' and not is_check2(color, board):
+            board[row][3]['color'] == 'blank' and \
+            not is_check2(color, board, kpos):
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] - 1), board)
-            if not is_check2(color, board):
+            if not is_check2(color, board, kpos):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] - 1),
                                      (row, location[1] - 2), board)
-                if not is_check2(color, board):
+                if not is_check2(color, board, kpos):
                     to_return.append((row, location[1] - 2))
                 unplay(*unplay_infos2, board=board)
             unplay(*unplay_infos, board=board)
 
         # If right castling is available and there is no "obstacle" -> go
         if castling_right and board[row][5]['color'] == 'blank' and \
-            board[row][6]['color'] == 'blank' and not is_check2(color, board):
+            board[row][6]['color'] == 'blank' and \
+            not is_check2(color, board, kpos):
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] + 1), board)
-            if not is_check2(color, board):
+            if not is_check2(color, board, kpos):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] + 1),
                                      (row, location[1] + 2), board)
-                if not is_check2(color, board):
+                if not is_check2(color, board, kpos):
                     to_return.append((row, location[1] + 2))
                 unplay(*unplay_infos2, board=board)
             unplay(*unplay_infos, board=board)
@@ -297,14 +299,17 @@ def fast_is_check(color, board):
                 return True
     return False
 
-def is_check2(color, board):
+def is_check2(color, board, kpos=None):
     """
     Quicker version of is_check
     Takes a color and a board and returns a boolean whether the player is check
     or not
     """
     enemy_col = enemy(color)
-    rkg, ckg = king_position(color, board)
+    if kpos is None:
+        rkg, ckg = king_position(color, board)
+    else:
+        rkg, ckg = kpos[color]
     # Down Right diag
     dist = 1
     while rkg + dist < 8 and ckg + dist < 8 and \
@@ -441,7 +446,7 @@ def is_check_mate_or_draw(color, board):
     """
     Tests if a situation is a checkmate or a draw
     """
-    if all_available_movements(color, board, 0, False, False) == []:
+    if all_available_movements(color, board, 0, None, False, False) == []:
         if is_check2(color, board):
             return True, 'mate'
         return True, 'draw'
@@ -488,7 +493,7 @@ def get_score(color, board):
                 values.get(piece.get('type'), 0)
     return to_return
 
-def all_available_movements(color, board, current_score, castling_left,
+def all_available_movements(color, board, current_score, kpos, castling_left,
                             castling_right, pos_score=True):
     """
     Takes a color, a board a current score and returns a list of dict containing
@@ -502,7 +507,7 @@ def all_available_movements(color, board, current_score, castling_left,
         for c, piece in enumerate(row):
             if piece['color'] == color:
                 amv = available_movements((r, c), board, castling_left,
-                                          castling_right)
+                                          castling_right, kpos)
                 for nr, nc in amv:
                     new_score = current_score + \
                         score_per_play((nr, nc), board)*(2*int(pos_score)-1)
@@ -539,22 +544,23 @@ def build_tree(color, board, depth, castling_left, castling_right):
     killers = [None for _ in range(depth + 1)]
 
     def internal_evaluate(current_board, current_cl, current_cr, current_depth,
-                          current_score, current_color, alpha, beta):
+                          current_score, current_kpos, current_color, alpha,
+                          beta):
         """
         Returns subtree, current_lambda, best_index
         """
         if current_depth == 0:
             return [], current_score, -1
         moves = all_available_movements(current_color, current_board,
-                                        current_score, current_cl, current_cr,
-                                        current_color == color)
+                                        current_score, current_kpos, current_cl,
+                                        current_cr, current_color == color)
 
         # Positive if current color is hero's one
         sign = 2 * int(current_color == color) - 1
 
         # Treat checkmate and draw cases
         if len(moves) == 0:
-            if is_check2(current_color, current_board):
+            if is_check2(current_color, current_board, current_kpos):
                 return [], -sign*1000, -1
             return [], 0, -1
 
@@ -572,6 +578,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             current_color,
             current_color == color,
             current_board,
+            current_kpos,
             randomize=depth - current_depth < 2,
             danger_first=depth - current_depth < 4,
             checkers_first=depth - current_depth < 4,
@@ -592,6 +599,11 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
             unplay_infos = play(move['from'], move['to'], current_board)
 
+            # Update current_kpos if needed:
+            if unplay_infos[1]['type'] == 'king':
+                current_kpos[current_color] = unplay_infos[2]
+
+            # Update castling infos if needed:
             if unplay_infos[1]['type'] == 'rook' or \
                 unplay_infos[1]['type'] == 'king':
                 current_cl, current_cr = update_castling(move['from'],
@@ -604,6 +616,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
                 current_cr,
                 current_depth - 1,
                 move['score'],
+                current_kpos,
                 enemy(current_color),
                 new_alpha,
                 new_beta,
@@ -633,10 +646,14 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
         return moves, nu, best_index
 
+    kpos = {
+        'white': king_position('white', board),
+        'black': king_position('black', board),
+    }
     t1 = time()
     tr, _, best_index = internal_evaluate(deepcopy(board), castling_left,
                                           castling_right, depth, current_score,
-                                          color, -5000, 5000)
+                                          kpos, color, -5000, 5000)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr, best_index
@@ -648,7 +665,7 @@ def readable_position(pos):
     """
     return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'][pos[1]] + str(8 - pos[0])
 
-def sort_by_interest(tree, color, maximize, board, randomize=False,
+def sort_by_interest(tree, color, maximize, board, kpos, randomize=False,
                      danger_first=False, checkers_first=False,
                      killer_move=None):
     """
@@ -671,7 +688,7 @@ def sort_by_interest(tree, color, maximize, board, randomize=False,
     if checkers_first:
         for n in range(_sorted + 1, len(tree)):
             unplay_data = play(tree[n]['from'], tree[n]['to'], board)
-            if is_check2(enemy(color), board):
+            if is_check2(enemy(color), board, kpos):
                 tree[_sorted], tree[n] = tree[n], tree[_sorted]
                 _sorted += 1
             unplay(*unplay_data, board=board)
@@ -694,8 +711,8 @@ def sort_by_interest(tree, color, maximize, board, randomize=False,
         while index >= 0 and tree[index]['score'] == tree[-1]['score']:
             index -= 1
         # List all in danger pieces
-        enemy_moves = all_available_movements(enemy(color), board, 0, False,
-                                              False, True)
+        enemy_moves = all_available_movements(enemy(color), board, 0, kpos,
+                                              False, False, True)
         in_danger = []
         for elt in enemy_moves:
             if elt['score'] > 0:
