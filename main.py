@@ -36,7 +36,9 @@ with open('board.p', 'rb') as _file:
 """
 
 MISSING = missing_pieces(BOARD)
-SCORE = get_score('white', BOARD)
+SCORE = get_score(TURN, BOARD)
+FINISHED, _ = is_check_mate_or_draw(TURN, BOARD)
+print(TURN, FINISHED)
 
 @app.route('/')
 def index():
@@ -52,6 +54,11 @@ def index():
 
 @app.route('/moves/<path:subpath>')
 def show_moves(subpath):
+
+    # If game is finished, do nothing
+    if FINISHED:
+        return redirect('/')
+
     _split = subpath.split('/')
     assert len(_split) == 2
     row, col = _split
@@ -73,6 +80,12 @@ def show_moves(subpath):
 
 @app.route('/play/<path:subpath>')
 def play_route(subpath):
+
+    # If game is finished, do nothing
+    global FINISHED
+    if FINISHED:
+        return redirect('/')
+
     _split = subpath.split('/')
     assert len(_split) == 4
     srow, scol, arow, acol = _split
@@ -112,6 +125,9 @@ def play_route(subpath):
         with open('board.p', 'wb') as _file:
             pickle.dump([BOARD, CASTLING, TURN], _file)
 
+    # update FINISHED boolean
+    FINISHED, _ = is_check_mate_or_draw(TURN, BOARD)
+
     return redirect('/')
 
 @app.route('/load')
@@ -124,6 +140,10 @@ def load_board():
 
 @app.route('/autoplay')
 def autoplay():
+
+    # If game is finished, do nothing
+    if FINISHED:
+        return redirect('/')
 
     # find the best move
     global TURN
