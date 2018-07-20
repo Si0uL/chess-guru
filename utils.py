@@ -133,15 +133,11 @@ def available_movements(location, board, castling_left=False,
     """
     to_return = []
     color = board[location[0]][location[1]]['color']
-    checker = fast_is_check
-    if board[location[0]][location[1]]['type'] == 'king' or \
-        is_check(color, board):
-        checker = is_check
     amv = available_movements_raw(location, board)
     for arrival in amv:
         unplay_infos = play(location, arrival, board)
 
-        if not checker(color, board):
+        if not is_check2(color, board):
             to_return.append(arrival)
 
         unplay(*unplay_infos, board=board)
@@ -153,28 +149,28 @@ def available_movements(location, board, castling_left=False,
         # If left castling is available and there is no "obstacle" -> go
         if castling_left and board[row][1]['color'] == 'blank' and \
             board[row][2]['color'] == 'blank' and \
-            board[row][3]['color'] == 'blank' and not checker(color, board):
+            board[row][3]['color'] == 'blank' and not is_check2(color, board):
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] - 1), board)
-            if not checker(color, board):
+            if not is_check2(color, board):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] - 1),
                                      (row, location[1] - 2), board)
-                if not checker(color, board):
+                if not is_check2(color, board):
                     to_return.append((row, location[1] - 2))
                 unplay(*unplay_infos2, board=board)
             unplay(*unplay_infos, board=board)
 
         # If right castling is available and there is no "obstacle" -> go
         if castling_right and board[row][5]['color'] == 'blank' and \
-            board[row][6]['color'] == 'blank' and not checker(color, board):
+            board[row][6]['color'] == 'blank' and not is_check2(color, board):
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] + 1), board)
-            if not checker(color, board):
+            if not is_check2(color, board):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] + 1),
                                      (row, location[1] + 2), board)
-                if not checker(color, board):
+                if not is_check2(color, board):
                     to_return.append((row, location[1] + 2))
                 unplay(*unplay_infos2, board=board)
             unplay(*unplay_infos, board=board)
@@ -301,12 +297,152 @@ def fast_is_check(color, board):
                 return True
     return False
 
+def is_check2(color, board):
+    """
+    Quicker version of is_check
+    Takes a color and a board and returns a boolean whether the player is check
+    or not
+    """
+    enemy_col = enemy(color)
+    rkg, ckg = king_position(color, board)
+    # Down Right diag
+    dist = 1
+    while rkg + dist < 8 and ckg + dist < 8 and \
+        board[rkg + dist][ckg + dist]['color'] == 'blank':
+        dist += 1
+    if rkg + dist < 8 and ckg + dist < 8:
+        _piece = board[rkg + dist][ckg + dist]
+        _type = _piece['type']
+        if _piece['color'] == enemy_col and (
+                _type == 'queen' or
+                _type == 'bishop' or
+                (dist == 1 and (
+                    _type == 'king' or
+                    (color == 'black' and _type == 'pawn')
+                ))
+        ):
+            return True
+
+    # Down Left diag
+    dist = 1
+    while rkg + dist < 8 and ckg - dist >= 0 and \
+        board[rkg + dist][ckg - dist]['color'] == 'blank':
+        dist += 1
+    if rkg + dist < 8 and ckg - dist >= 0:
+        _piece = board[rkg + dist][ckg - dist]
+        _type = _piece['type']
+        if _piece['color'] == enemy_col and (
+                _type == 'queen' or
+                _type == 'bishop' or
+                (dist == 1 and (
+                    _type == 'king' or
+                    (color == 'black' and _type == 'pawn')
+                ))
+        ):
+            return True
+
+    # Up Left diag
+    dist = 1
+    while rkg - dist >= 0 and ckg - dist >= 0 and \
+        board[rkg - dist][ckg - dist]['color'] == 'blank':
+        dist += 1
+    if rkg - dist >= 0 and ckg - dist >= 0:
+        _piece = board[rkg - dist][ckg - dist]
+        _type = _piece['type']
+        if _piece['color'] == enemy_col and (
+                _type == 'queen' or
+                _type == 'bishop' or
+                (dist == 1 and (
+                    _type == 'king' or
+                    (color == 'white' and _type == 'pawn')
+                ))
+        ):
+            return True
+
+    # Up Right diag
+    dist = 1
+    while rkg - dist >= 0 and ckg + dist < 8 and \
+        board[rkg - dist][ckg + dist]['color'] == 'blank':
+        dist += 1
+    if rkg - dist >= 0 and ckg + dist < 8:
+        _piece = board[rkg - dist][ckg + dist]
+        _type = _piece['type']
+        if _piece['color'] == enemy_col and (
+                _type == 'queen' or
+                _type == 'bishop' or
+                (dist == 1 and (
+                    _type == 'king' or
+                    (color == 'white' and _type == 'pawn')
+                ))
+        ):
+            return True
+
+    # Up line
+    dist = 1
+    while rkg - dist >= 0 and board[rkg - dist][ckg]['color'] == 'blank':
+        dist += 1
+    if rkg - dist >= 0:
+        _piece = board[rkg - dist][ckg]
+        if _piece['color'] == enemy_col and (
+                _piece['type'] == 'queen' or
+                _piece['type'] == 'rook'
+        ):
+            return True
+
+    # Right line
+    dist = 1
+    while ckg + dist < 8 and board[rkg][ckg + dist]['color'] == 'blank':
+        dist += 1
+    if ckg + dist < 8:
+        _piece = board[rkg][ckg + dist]
+        if _piece['color'] == enemy_col and (
+                _piece['type'] == 'queen' or
+                _piece['type'] == 'rook'
+        ):
+            return True
+
+    # Down line
+    dist = 1
+    while rkg + dist < 8 and board[rkg + dist][ckg]['color'] == 'blank':
+        dist += 1
+    if rkg + dist < 8:
+        _piece = board[rkg + dist][ckg]
+        if _piece['color'] == enemy_col and (
+                _piece['type'] == 'queen' or
+                _piece['type'] == 'rook'
+        ):
+            return True
+
+    # Left line
+    dist = 1
+    while ckg - dist >= 0 and board[rkg][ckg - dist]['color'] == 'blank':
+        dist += 1
+    if ckg - dist >= 0:
+        _piece = board[rkg][ckg - dist]
+        if _piece['color'] == enemy_col and (
+                _piece['type'] == 'queen' or
+                _piece['type'] == 'rook'
+        ):
+            return True
+
+    # Checking for knights to end with
+    knight_moves = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
+                    (1, -2), (-1, -2)]
+    for addr, addc in knight_moves:
+        nr, nc = rkg + addr, ckg + addc
+        if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
+            board[nr][nc]['color'] == enemy_col and \
+            board[nr][nc]['type'] == 'knight':
+            return True
+
+    return False
+
 def is_check_mate_or_draw(color, board):
     """
     Tests if a situation is a checkmate or a draw
     """
     if all_available_movements(color, board, 0, False, False) == []:
-        if is_check(color, board):
+        if is_check2(color, board):
             return True, 'mate'
         return True, 'draw'
     return False, ''
@@ -418,7 +554,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
         # Treat checkmate and draw cases
         if len(moves) == 0:
-            if is_check(current_color, current_board):
+            if is_check2(current_color, current_board):
                 return [], -sign*1000, -1
             return [], 0, -1
 
@@ -437,7 +573,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             current_color == color,
             current_board,
             randomize=depth - current_depth < 2,
-            danger_first=depth - current_depth < 1,
+            danger_first=depth - current_depth < 4,
             checkers_first=depth - current_depth < 4,
             killer_move=killers[current_depth],
         )
@@ -535,7 +671,7 @@ def sort_by_interest(tree, color, maximize, board, randomize=False,
     if checkers_first:
         for n in range(_sorted + 1, len(tree)):
             unplay_data = play(tree[n]['from'], tree[n]['to'], board)
-            if is_check(enemy(color), board):
+            if is_check2(enemy(color), board):
                 tree[_sorted], tree[n] = tree[n], tree[_sorted]
                 _sorted += 1
             unplay(*unplay_data, board=board)
