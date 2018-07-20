@@ -135,12 +135,12 @@ def available_movements(location, board, castling_left=False,
     color = board[location[0]][location[1]]['color']
     amv = available_movements_raw(location, board)
     for arrival in amv:
-        unplay_infos = play(location, arrival, board)
+        unplay_infos = play(location, arrival, board, kpos)
 
         if not is_check2(color, board, kpos):
             to_return.append(arrival)
 
-        unplay(*unplay_infos, board=board)
+        unplay(*unplay_infos, board=board, kpos=kpos)
 
     # Add castling moves (only king move, play() will deduce and move the rook)
     if board[location[0]][location[1]]['type'] == 'king' and \
@@ -152,34 +152,34 @@ def available_movements(location, board, castling_left=False,
             board[row][3]['color'] == 'blank' and \
             not is_check2(color, board, kpos):
             # Check if in check on the way
-            unplay_infos = play(location, (row, location[1] - 1), board)
+            unplay_infos = play(location, (row, location[1] - 1), board, kpos)
             if not is_check2(color, board, kpos):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] - 1),
-                                     (row, location[1] - 2), board)
+                                     (row, location[1] - 2), board, kpos)
                 if not is_check2(color, board, kpos):
                     to_return.append((row, location[1] - 2))
-                unplay(*unplay_infos2, board=board)
-            unplay(*unplay_infos, board=board)
+                unplay(*unplay_infos2, board=board, kpos=kpos)
+            unplay(*unplay_infos, board=board, kpos=kpos)
 
         # If right castling is available and there is no "obstacle" -> go
         if castling_right and board[row][5]['color'] == 'blank' and \
             board[row][6]['color'] == 'blank' and \
             not is_check2(color, board, kpos):
             # Check if in check on the way
-            unplay_infos = play(location, (row, location[1] + 1), board)
+            unplay_infos = play(location, (row, location[1] + 1), board, kpos)
             if not is_check2(color, board, kpos):
                 # Check if not checked at arrival
                 unplay_infos2 = play((row, location[1] + 1),
-                                     (row, location[1] + 2), board)
+                                     (row, location[1] + 2), board, kpos)
                 if not is_check2(color, board, kpos):
                     to_return.append((row, location[1] + 2))
-                unplay(*unplay_infos2, board=board)
-            unplay(*unplay_infos, board=board)
+                unplay(*unplay_infos2, board=board, kpos=kpos)
+            unplay(*unplay_infos, board=board, kpos=kpos)
 
     return to_return
 
-def play(start, arrival, board):
+def play(start, arrival, board, kpos=None):
     """
     Puts piece located at start at arrival position, MODIFIES board
     TODO: add piece creation
@@ -211,9 +211,14 @@ def play(start, arrival, board):
                 'color': former_start['color']
             }
             board[start[0]][7] = {'color': 'blank'}
+
+    # Update kpos
+    if not kpos is None and former_start['type'] == 'king':
+        kpos[former_start['color']] = arrival
+
     return start, former_start, arrival, former_arrival
 
-def unplay(start, former_start, arrival, former_arrival, board):
+def unplay(start, former_start, arrival, former_arrival, board, kpos=None):
     """
     Undo the efect of the play() function. MODIFIES board
     """
@@ -235,6 +240,11 @@ def unplay(start, former_start, arrival, former_arrival, board):
                 'color': former_start['color']
             }
             board[start[0]][5] = {'color': 'blank'}
+
+    # If kpos given, update it:
+    if not kpos is None and former_start['type'] == 'king':
+        kpos[former_start['color']] = start
+
 
 
 def score_per_play(arrival, board):
@@ -579,7 +589,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             current_color == color,
             current_board,
             current_kpos,
-            randomize=depth - current_depth < 0,
+            randomize=depth - current_depth < 2,
             danger_first=depth - current_depth < 4,
             checkers_first=depth - current_depth < 4,
             killer_move=killers[current_depth],
@@ -597,12 +607,8 @@ def build_tree(color, board, depth, castling_left, castling_right):
                 ))
                 print('{}%'.format(int(100*n/len(moves))), end='\r')
 
-            unplay_infos = play(move['from'], move['to'], current_board)
-
-            # Update current_kpos if needed:
-            if unplay_infos[1]['type'] == 'king':
-                cached_kpos = current_kpos[current_color]
-                current_kpos[current_color] = unplay_infos[2]
+            unplay_infos = play(move['from'], move['to'], current_board,
+                                current_kpos)
 
             # Update castling infos if needed:
             if unplay_infos[1]['type'] == 'rook' or \
@@ -640,11 +646,7 @@ def build_tree(color, board, depth, castling_left, castling_right):
             if sign == -1 and nu < new_beta:
                 new_beta = next_nu
 
-            unplay(*unplay_infos, board=current_board)
-
-            # Undo current_kpos changes if needed:
-            if unplay_infos[1]['type'] == 'king':
-                current_kpos[current_color] = cached_kpos
+            unplay(*unplay_infos, board=current_board, kpos=current_kpos)
 
             if new_alpha >= new_beta:
                 killers[current_depth] = move
@@ -693,11 +695,11 @@ def sort_by_interest(tree, color, maximize, board, kpos, randomize=False,
     # Checkers first
     if checkers_first:
         for n in range(_sorted + 1, len(tree)):
-            unplay_data = play(tree[n]['from'], tree[n]['to'], board)
+            unplay_data = play(tree[n]['from'], tree[n]['to'], board, kpos)
             if is_check2(enemy(color), board, kpos):
                 tree[_sorted], tree[n] = tree[n], tree[_sorted]
                 _sorted += 1
-            unplay(*unplay_data, board=board)
+            unplay(*unplay_data, board=board, kpos=kpos)
     # Basic sorting method by direct score (kills first !)
     for i in range(_sorted + 1, len(tree)):
         _idx = i
