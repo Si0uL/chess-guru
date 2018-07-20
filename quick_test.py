@@ -1,10 +1,11 @@
 import pickle
 from utils import *
 
-with open('unefficient.p', 'rb') as _file:
-    board = pickle.load(_file)
+with open('board.p', 'rb') as _file:
+    board, castling, turn = pickle.load(_file)
 
-tree, best_index = build_tree('white', board, 4, True, True)
+tree, best_index = build_tree(turn, board, 6, castling[turn]['left'],
+                              castling[turn]['right'])
 
 best_elt = tree[best_index]
 

@@ -17,7 +17,6 @@ app = Flask(__name__)
 HIGHLIGHTED = []
 SELECTED = []
 TURN = 'white'
-SCORE = get_score('white', BOARD)
 DEPTH = 4
 AUTOSAVE = True
 CASTLING = {
@@ -33,10 +32,11 @@ CASTLING = {
 
 """
 with open('board.p', 'rb') as _file:
-    BOARD = pickle.load(_file)
+    BOARD, CASTLING, TURN = pickle.load(_file)
 """
 
 MISSING = missing_pieces(BOARD)
+SCORE = get_score('white', BOARD)
 
 @app.route('/')
 def index():
@@ -110,15 +110,16 @@ def play_route(subpath):
     # Autosave in board.p on white's turns
     if AUTOSAVE and TURN == 'white':
         with open('board.p', 'wb') as _file:
-            pickle.dump(BOARD, _file)
+            pickle.dump([BOARD, CASTLING, TURN], _file)
 
     return redirect('/')
 
 @app.route('/load')
 def load_board():
-    global BOARD
+    global BOARD, SCORE, CASTLING
     with open('board.p', 'rb') as _file:
-        BOARD = pickle.load(_file)
+        BOARD, CASTLING, TURN = pickle.load(_file)
+    MISSING = missing_pieces(BOARD)
     return redirect('/')
 
 @app.route('/autoplay')
