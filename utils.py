@@ -249,15 +249,18 @@ def score_per_play(arrival, board):
     Return positive score gain if movement kills a piece, else 0
     TODO: take into account piece creation
     """
-    values = {
-        'pawn': 1,
-        'rook': 5,
-        'knight': 3,
-        'bishop': 3,
-        'queen': 9,
-    }
-    return values.get(board[arrival[0]][arrival[1]].get('type'), 0)
-
+    _type = board[arrival[0]][arrival[1]].get('type')
+    if _type is None:
+        return 0
+    elif _type == 'pawn':
+        return 1
+    elif _type == 'knight' or _type == 'bishop':
+        return 3
+    elif _type == 'rook':
+        return 5
+    elif _type == 'queen':
+        return 9
+    return 0
 
 def king_position(color, board):
     """
