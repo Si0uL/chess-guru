@@ -10,7 +10,6 @@ def available_movements_raw(location, board):
     TODO: add castling and en-passant
     """
 
-    to_return = []
     typ = board[location[0]][location[1]].get('type')
     col = board[location[0]][location[1]]['color']
 
@@ -18,65 +17,65 @@ def available_movements_raw(location, board):
         # down
         r, c = location[0] + 1, location[1]
         while r < 8 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r += 1
         if r < 8 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # up
         r, c = location[0] - 1, location[1]
         while r > -1 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r -= 1
         if r > -1 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # right
         r, c = location[0], location[1] + 1
         while c < 8 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             c += 1
         if c < 8 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # left
         r, c = location[0], location[1] - 1
         while c > -1 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             c -= 1
         if c > -1 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
 
     if typ == 'bishop' or typ == 'queen':
         # downright
         r, c = location[0] + 1, location[1] + 1
         while r < 8 and c < 8 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r += 1
             c += 1
         if r < 8 and c < 8 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # upright
         r, c = location[0] - 1, location[1] + 1
         while r > -1 and c < 8 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r -= 1
             c += 1
         if r > -1 and c < 8 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # upleft
         r, c = location[0] - 1, location[1] - 1
         while r > -1 and c > -1 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r -= 1
             c -= 1
         if r > -1 and c > -1 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
         # downleft
         r, c = location[0] + 1, location[1] - 1
         while r < 8 and c > -1 and board[r][c]['color'] == 'blank':
-            to_return.append((r, c))
+            yield (r, c)
             r += 1
             c -= 1
         if r < 8 and c > -1 and board[r][c]['color'] != col:
-            to_return.append((r, c))
+            yield (r, c)
 
     elif typ == 'pawn':
         # black: +1 / white: -1
@@ -84,24 +83,24 @@ def available_movements_raw(location, board):
 
         # Straight
         if board[location[0] + _sense][location[1]]['color'] == 'blank':
-            to_return.append((location[0] + _sense, location[1]))
+            yield (location[0] + _sense, location[1])
             # 2 straight
             if location[0] == 6 and col == 'white' and \
                 board[4][location[1]]['color'] == 'blank':
-                to_return.append((4, location[1]))
+                yield (4, location[1])
             elif location[0] == 1 and col == 'black' and \
                 board[3][location[1]]['color'] == 'blank':
-                to_return.append((3, location[1]))
+                yield (3, location[1])
             else:
                 pass
         # Kill an enemy (left)
         if location[1] != 0 and \
             board[location[0] + _sense][location[1] - 1]['color'] == enemy(col):
-            to_return.append((location[0] + _sense, location[1] - 1))
+            yield (location[0] + _sense, location[1] - 1)
         # Kill an enemy (right)
         if location[1] != 7 and \
             board[location[0] + _sense][location[1] + 1]['color'] == enemy(col):
-            to_return.append((location[0] + _sense, location[1] + 1))
+            yield (location[0] + _sense, location[1] + 1)
 
     elif typ == 'knight':
         knight_moves = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
@@ -110,7 +109,7 @@ def available_movements_raw(location, board):
             nr, nc = location[0] + addr, location[1] + addc
             if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
                 board[nr][nc]['color'] != col:
-                to_return.append((nr, nc))
+                yield(nr, nc)
 
     elif typ == 'king':
         for addr in range(-1, 2):
@@ -119,9 +118,8 @@ def available_movements_raw(location, board):
                     nr, nc = location[0] + addr, location[1] + addc
                     if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
                         board[nr][nc]['color'] != col:
-                        to_return.append((nr, nc))
+                        yield(nr, nc)
 
-    return to_return
 
 def available_movements(location, board, castling_left=False,
                         castling_right=False, kpos=None):
@@ -133,8 +131,7 @@ def available_movements(location, board, castling_left=False,
     """
     to_return = []
     color = board[location[0]][location[1]]['color']
-    amv = available_movements_raw(location, board)
-    for arrival in amv:
+    for arrival in available_movements_raw(location, board):
         unplay_infos = play(location, arrival, board, kpos)
 
         if not is_check2(color, board, kpos):
@@ -276,7 +273,11 @@ def enemy(color):
     """
     'inverts' the color
     """
-    return {'white': 'black', 'black': 'white'}[color]
+    if color == 'white':
+        return 'black'
+    elif color == 'black':
+        return 'white'
+    return None
 
 def is_check(color, board):
     """
