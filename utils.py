@@ -704,6 +704,7 @@ def all_available_movements(color, board, current_score, kpos, castling_left,
         'next': empty list to be used in evaluate_best
     """
     to_return = []
+    tr_app = to_return.append
     for r, row in enumerate(board):
         for c, piece in enumerate(row):
             if piece['color'] == color:
@@ -716,20 +717,23 @@ def all_available_movements(color, board, current_score, kpos, castling_left,
                     if piece['type'] == 'pawn' and (nr == 0 or nr == 7):
                         new_score += 8 * (2*int(pos_score)-1)
                     # Castling: fictive +0.1 bonus
-                    row = {'white': 7, 'black': 0}[color]
+                    if color == 'white':
+                        krow = 7
+                    else:
+                        krow = 0
                     if piece['type'] == 'king' and abs(nc - c) == 2:
                         new_score += 0.1 * (2*int(pos_score)-1)
                     # Lose both future castling: fictive -0.1
                     elif castling_left and not castling_right and \
-                        (r, c) == (row, 0):
+                        (r, c) == (krow, 0):
                         new_score -= 0.1 * (2*int(pos_score)-1)
                     elif castling_right and not castling_left and \
-                        (r, c) == (row, 7):
+                        (r, c) == (krow, 7):
                         new_score -= 0.1 * (2*int(pos_score)-1)
                     elif (castling_right or castling_left) and \
                         piece['type'] == 'king':
                         new_score -= 0.1 * (2*int(pos_score)-1)
-                    to_return.append({
+                    tr_app({
                         'from': (r, c),
                         'to': (nr, nc),
                         'score': new_score,
