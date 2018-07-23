@@ -797,7 +797,8 @@ def build_tree(color, board, depth, castling):
                 print('{}/{} {} {} -> {}'.format(
                     str(n+1).zfill(2),
                     len(moves),
-                    current_board[move['from'][0]][move['from'][1]]['type'],
+                    current_board[move['from'][0]]
+                    [move['from'][1]]['type'].ljust(6),
                     move['from'],
                     move['to'],
                 ))
