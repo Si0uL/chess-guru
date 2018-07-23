@@ -120,7 +120,6 @@ def available_movements_raw(location, board):
                         board[nr][nc]['color'] != col:
                         yield(nr, nc)
 
-
 def available_movements(location, board, castling_left=False,
                         castling_right=False, kpos=None):
     """
@@ -252,8 +251,6 @@ def unplay(start, former_start, arrival, former_arrival, board, kpos=None):
     if not kpos is None and former_start['type'] == 'king':
         kpos[former_start['color']] = start
 
-
-
 def score_per_play(arrival, board):
     """
     Return positive score gain if movement kills a piece, else 0
@@ -291,37 +288,6 @@ def enemy(color):
     elif color == 'black':
         return 'white'
     return None
-
-def is_check(color, board):
-    """
-    Takes a color and a board and returns a boolean whether the player is check
-    or not
-    """
-    target_col = enemy(color)
-    kpos = king_position(color, board)
-    for r, row in enumerate(board):
-        for c, p in enumerate(row):
-            if p['color'] == target_col and \
-                kpos in available_movements_raw((r, c), board):
-                return True
-    return False
-
-def fast_is_check(color, board):
-    """
-    Quicker version of is_check, as designed to be used in available_movements
-    to remove potential movements that will lead to a check against a player.
-    If you are not already in check, and it is not the king that is moved,
-    only enemy queen, rooks and bishops need to be checked
-    """
-    target_col = enemy(color)
-    kpos = king_position(color, board)
-    for r, row in enumerate(board):
-        for c, p in enumerate(row):
-            if p['color'] == target_col and \
-                p['type'] in ['queen', 'rook', 'bishop'] and\
-                kpos in available_movements_raw((r, c), board):
-                return True
-    return False
 
 def is_check2(color, board, kpos=None):
     """
@@ -652,29 +618,6 @@ def is_check_mate_or_draw(color, board):
             return True, 'mate'
         return True, 'draw'
     return False, ''
-
-
-def my_hash(board, turn):
-    """
-    Converts a board into a unique string
-    """
-    to_return = turn[0].capitalize()
-    translate = {
-        'pawn': 'P',
-        'rook': 'T',
-        'knight': 'K',
-        'bishop': 'B',
-        'queen': 'Q',
-        'king': 'G',
-        'white': 'W',
-        'black': 'B',
-    }
-    for r, row in enumerate(board):
-        for c, piece in enumerate(row):
-            if piece['color'] != 'blank':
-                to_return += str(r) + str(c) + translate[piece['color']] + \
-                    translate[piece['type']]
-    return to_return
 
 def get_score(color, board):
     """
