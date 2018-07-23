@@ -131,13 +131,25 @@ def available_movements(location, board, castling_left=False,
     """
     to_return = []
     color = board[location[0]][location[1]]['color']
+
+    checked = is_check2(color, board, kpos)
+    if checked:
+        castling_left = castling_right = False
+
+    use_slow = checked or board[location[0]][location[1]]['type'] == 'king'
+
     for arrival in available_movements_raw(location, board):
-        unplay_infos = play(location, arrival, board, kpos)
 
-        if not is_check2(color, board, kpos):
-            to_return.append(arrival)
+        if use_slow:
+            unplay_infos = play(location, arrival, board, kpos)
+            if not is_check2(color, board, kpos):
+                to_return.append(arrival)
+            unplay(*unplay_infos, board=board, kpos=kpos)
 
-        unplay(*unplay_infos, board=board, kpos=kpos)
+        else:
+            if not fast_is_check2(color, board, location, arrival, kpos):
+                to_return.append(arrival)
+
 
     # Add castling moves (only king move, play() will deduce and move the rook)
     if board[location[0]][location[1]]['type'] == 'king' and \
@@ -146,8 +158,7 @@ def available_movements(location, board, castling_left=False,
         # If left castling is available and there is no "obstacle" -> go
         if castling_left and board[row][1]['color'] == 'blank' and \
             board[row][2]['color'] == 'blank' and \
-            board[row][3]['color'] == 'blank' and \
-            not is_check2(color, board, kpos):
+            board[row][3]['color'] == 'blank':
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] - 1), board, kpos)
             if not is_check2(color, board, kpos):
@@ -161,8 +172,7 @@ def available_movements(location, board, castling_left=False,
 
         # If right castling is available and there is no "obstacle" -> go
         if castling_right and board[row][5]['color'] == 'blank' and \
-            board[row][6]['color'] == 'blank' and \
-            not is_check2(color, board, kpos):
+            board[row][6]['color'] == 'blank':
             # Check if in check on the way
             unplay_infos = play(location, (row, location[1] + 1), board, kpos)
             if not is_check2(color, board, kpos):
@@ -456,6 +466,183 @@ def is_check2(color, board, kpos=None):
 
     return False
 
+def fast_is_check2(color, board, departure, arrival, kpos=None):
+    """
+    Quicker version of is_check2
+    You have not to be in check position before playing departure -> arrival.
+    Your movement should not concern your king.
+    board is just before the play departure -> arrival
+    We check here if moving this doesn't affect you check state. To do so, only
+    the concerned row or diag shared by the king and the moved piece is
+    re-checked.
+    """
+    enemy_col = enemy(color)
+    if kpos is None:
+        rkg, ckg = king_position(color, board)
+    else:
+        rkg, ckg = kpos[color]
+
+    delta_row, delta_col = departure[0] - rkg, departure[1] - ckg
+
+    # Alterate board!
+    board[departure[0]][departure[1]]['color'] = 'blank'
+
+    if delta_row == 0:
+        if delta_col > 0:
+            # Right line
+            dist = 1
+            while ckg + dist < 8 and board[rkg][ckg + dist]['color'] == 'blank':
+                dist += 1
+            if ckg + dist < 8:
+                _piece = board[rkg][ckg + dist]
+                if _piece['color'] == enemy_col and (
+                        _piece['type'] == 'queen' or
+                        _piece['type'] == 'rook'
+                ):
+                    if not (arrival[0] - rkg == 0 and arrival[1] > ckg and
+                            arrival[1] - ckg <= dist):
+                        board[departure[0]][departure[1]]['color'] = color
+                        return True
+        else:
+            # Left line
+            dist = 1
+            while ckg - dist >= 0 and board[rkg][ckg - dist]['color'] == 'blank':
+                dist += 1
+            if ckg - dist >= 0:
+                _piece = board[rkg][ckg - dist]
+                if _piece['color'] == enemy_col and (
+                        _piece['type'] == 'queen' or
+                        _piece['type'] == 'rook'
+                ):
+                    if not (arrival[0] - rkg == 0 and arrival[1] < ckg and
+                            ckg - arrival[1] <= dist):
+                        board[departure[0]][departure[1]]['color'] = color
+                        return True
+
+    elif delta_col == 0:
+        if delta_row > 0:
+            # Down line
+            dist = 1
+            while rkg + dist < 8 and board[rkg + dist][ckg]['color'] == 'blank':
+                dist += 1
+            if rkg + dist < 8:
+                _piece = board[rkg + dist][ckg]
+                if _piece['color'] == enemy_col and (
+                        _piece['type'] == 'queen' or
+                        _piece['type'] == 'rook'
+                ):
+                    if not (arrival[1] - ckg == 0 and arrival[0] > rkg and
+                            arrival[0] - rkg <= dist):
+                        board[departure[0]][departure[1]]['color'] = color
+                        return True
+        else:
+            # Up line
+            dist = 1
+            while rkg - dist >= 0 and board[rkg - dist][ckg]['color'] == 'blank':
+                dist += 1
+            if rkg - dist >= 0:
+                _piece = board[rkg - dist][ckg]
+                if _piece['color'] == enemy_col and (
+                        _piece['type'] == 'queen' or
+                        _piece['type'] == 'rook'
+                ):
+                    if not (arrival[1] - ckg == 0 and arrival[0] < rkg and
+                            rkg - arrival[0] <= dist):
+                        board[departure[0]][departure[1]]['color'] = color
+                        return True
+
+    elif abs(delta_row) == abs(delta_col):
+        if delta_row > 0:
+            if delta_col > 0:
+                # Down Right diag
+                dist = 1
+                while rkg + dist < 8 and ckg + dist < 8 and \
+                    board[rkg + dist][ckg + dist]['color'] == 'blank':
+                    dist += 1
+                if rkg + dist < 8 and ckg + dist < 8:
+                    _piece = board[rkg + dist][ckg + dist]
+                    _type = _piece['type']
+                    if _piece['color'] == enemy_col and (
+                            _type == 'queen' or
+                            _type == 'bishop' or
+                            (dist == 1 and (
+                                _type == 'king' or
+                                (color == 'black' and _type == 'pawn')
+                            ))
+                    ):
+                        if not (arrival[0] - rkg == arrival[1] - ckg and
+                                arrival[0] - rkg <= dist):
+                            board[departure[0]][departure[1]]['color'] = color
+                            return True
+            else:
+                # Down Left diag
+                dist = 1
+                while rkg + dist < 8 and ckg - dist >= 0 and \
+                    board[rkg + dist][ckg - dist]['color'] == 'blank':
+                    dist += 1
+                if rkg + dist < 8 and ckg - dist >= 0:
+                    _piece = board[rkg + dist][ckg - dist]
+                    _type = _piece['type']
+                    if _piece['color'] == enemy_col and (
+                            _type == 'queen' or
+                            _type == 'bishop' or
+                            (dist == 1 and (
+                                _type == 'king' or
+                                (color == 'black' and _type == 'pawn')
+                            ))
+                    ):
+                        if not (arrival[0] - rkg == ckg - arrival[1] and
+                                arrival[0] - rkg <= dist):
+                            board[departure[0]][departure[1]]['color'] = color
+                            return True
+
+        else:
+            if delta_col > 0:
+                # Up Right diag
+                dist = 1
+                while rkg - dist >= 0 and ckg + dist < 8 and \
+                    board[rkg - dist][ckg + dist]['color'] == 'blank':
+                    dist += 1
+                if rkg - dist >= 0 and ckg + dist < 8:
+                    _piece = board[rkg - dist][ckg + dist]
+                    _type = _piece['type']
+                    if _piece['color'] == enemy_col and (
+                            _type == 'queen' or
+                            _type == 'bishop' or
+                            (dist == 1 and (
+                                _type == 'king' or
+                                (color == 'white' and _type == 'pawn')
+                            ))
+                    ):
+                        if not (rkg - arrival[0] == arrival[1] - ckg and
+                                rkg - arrival[0] <= dist):
+                            board[departure[0]][departure[1]]['color'] = color
+                            return True
+            else:
+                # Up Left diag
+                dist = 1
+                while rkg - dist >= 0 and ckg - dist >= 0 and \
+                    board[rkg - dist][ckg - dist]['color'] == 'blank':
+                    dist += 1
+                if rkg - dist >= 0 and ckg - dist >= 0:
+                    _piece = board[rkg - dist][ckg - dist]
+                    _type = _piece['type']
+                    if _piece['color'] == enemy_col and (
+                            _type == 'queen' or
+                            _type == 'bishop' or
+                            (dist == 1 and (
+                                _type == 'king' or
+                                (color == 'white' and _type == 'pawn')
+                            ))
+                    ):
+                        if not (rkg - arrival[0] == ckg - arrival[1] and
+                                rkg - arrival[0] <= dist):
+                            board[departure[0]][departure[1]]['color'] = color
+                            return True
+
+    board[departure[0]][departure[1]]['color'] = color
+    return False
+
 def is_check_mate_or_draw(color, board):
     """
     Tests if a situation is a checkmate or a draw
@@ -545,7 +732,6 @@ def all_available_movements(color, board, current_score, kpos, castling_left,
                     to_return.append({
                         'from': (r, c),
                         'to': (nr, nc),
-                        'next': [],
                         'score': new_score,
                     })
     return to_return
