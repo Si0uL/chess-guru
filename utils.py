@@ -740,14 +740,14 @@ def all_available_movements(color, board, current_score, kpos, castling_left,
                     })
     return to_return
 
-def build_tree(color, board, depth, castling_left, castling_right):
+def build_tree(color, board, depth, castling):
     """
     Constructs a tree of possible actions
     """
     current_score = get_score(color, board)
     killers = [None for _ in range(depth + 1)]
 
-    def internal_evaluate(current_board, current_cl, current_cr, current_depth,
+    def internal_evaluate(current_board, current_cast, current_depth,
                           current_score, current_kpos, current_color, alpha,
                           beta):
         """
@@ -756,8 +756,10 @@ def build_tree(color, board, depth, castling_left, castling_right):
         if current_depth == 0:
             return [], current_score, -1
         moves = all_available_movements(current_color, current_board,
-                                        current_score, current_kpos, current_cl,
-                                        current_cr, current_color == color)
+                                        current_score, current_kpos,
+                                        current_cast[current_color]['left'],
+                                        current_cast[current_color]['right'],
+                                        current_color == color)
 
         # Positive if current color is hero's one
         sign = 2 * int(current_color == color) - 1
@@ -805,17 +807,19 @@ def build_tree(color, board, depth, castling_left, castling_right):
                                 current_kpos)
 
             # Update castling infos if needed:
-            if unplay_infos[1]['type'] == 'rook' or \
-                unplay_infos[1]['type'] == 'king':
-                new_cl, new_cr = update_castling(move['from'], current_color,
-                                                 current_cl, current_cr)
-            else:
-                new_cl, new_cr = current_cl, current_cr
+            old_cl = current_cast[current_color]['left']
+            old_cr = current_cast[current_color]['right']
+            new_cl, new_cr = update_castling(move['from'], current_color,
+                                             old_cl, old_cr)
+            current_cast[current_color] = {
+                'left': new_cl,
+                'right': new_cr,
+            }
+
 
             next_list, next_nu, _ = internal_evaluate(
                 current_board,
-                new_cl,
-                new_cr,
+                current_cast,
                 current_depth - 1,
                 move['score'],
                 current_kpos,
@@ -842,6 +846,11 @@ def build_tree(color, board, depth, castling_left, castling_right):
 
             unplay(*unplay_infos, board=current_board, kpos=current_kpos)
 
+            current_cast[current_color] = {
+                'left': old_cl,
+                'right': old_cr,
+            }
+
             if new_alpha >= new_beta:
                 killers[current_depth] = move
                 break
@@ -853,9 +862,9 @@ def build_tree(color, board, depth, castling_left, castling_right):
         'black': king_position('black', board),
     }
     t1 = time()
-    tr, _, best_index = internal_evaluate(deepcopy(board), castling_left,
-                                          castling_right, depth, current_score,
-                                          kpos, color, -5000, 5000)
+    tr, _, best_index = internal_evaluate(deepcopy(board), castling, depth,
+                                          current_score, kpos, color, -5000,
+                                          5000)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
     return tr, best_index

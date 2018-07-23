@@ -149,8 +149,7 @@ def autoplay():
 
     # find the best move
     global TURN
-    tree, best_index = build_tree(TURN, BOARD, DEPTH, CASTLING[TURN]['left'],
-                                  CASTLING[TURN]['right'])
+    tree, best_index = build_tree(TURN, BOARD, DEPTH, CASTLING)
 
     # Get departure/arrival positions
     srow, scol = tree[best_index]['from']
