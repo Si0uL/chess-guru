@@ -10,8 +10,6 @@ from utils import (
     enemy,
     update_castling,
     missing_pieces,
-    is_check,
-    is_check2,
 )
 
 app = Flask(__name__)
@@ -43,7 +41,6 @@ FINISHED, _ = is_check_mate_or_draw(TURN, BOARD)
 
 @app.route('/')
 def index():
-    assert is_check(TURN, BOARD) == is_check2(TURN, BOARD)
     message = "{}'s turn".format(TURN.title())
     is_ended, end_type = is_check_mate_or_draw(TURN, BOARD)
     if is_ended and end_type == 'mate':
