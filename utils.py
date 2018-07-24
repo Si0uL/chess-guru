@@ -121,7 +121,7 @@ def available_movements_raw(location, board):
                         yield(nr, nc)
 
 def available_movements(location, board, castling_left=False,
-                        castling_right=False, kpos=None):
+                        castling_right=False, kpos=None, am_i_check=None):
     """
     Take a departure location and a board and returns a list of possible arrival
     positions, using available_movements_raw, but taking check into account
@@ -131,11 +131,13 @@ def available_movements(location, board, castling_left=False,
     to_return = []
     color = board[location[0]][location[1]]['color']
 
-    checked = is_check2(color, board, kpos)
-    if checked:
+    if am_i_check is None:
+        am_i_check = is_check2(color, board, kpos)
+
+    if am_i_check:
         castling_left = castling_right = False
 
-    use_slow = checked or board[location[0]][location[1]]['type'] == 'king'
+    use_slow = am_i_check or board[location[0]][location[1]]['type'] == 'king'
 
     for arrival in available_movements_raw(location, board):
 
@@ -441,6 +443,8 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
     We check here if moving this doesn't affect you check state. To do so, only
     the concerned row or diag shared by the king and the moved piece is
     re-checked.
+    Done to be used BEFORE using play() (to avoid using it if unauthorised) but
+    you can use it after.
     """
     enemy_col = enemy(color)
     if kpos is None:
@@ -451,6 +455,7 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
     delta_row, delta_col = departure[0] - rkg, departure[1] - ckg
 
     # Alterate board!
+    org_color = board[departure[0]][departure[1]]['color']
     board[departure[0]][departure[1]]['color'] = 'blank'
 
     if delta_row == 0:
@@ -467,7 +472,7 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                 ):
                     if not (arrival[0] - rkg == 0 and arrival[1] > ckg and
                             arrival[1] - ckg <= dist):
-                        board[departure[0]][departure[1]]['color'] = color
+                        board[departure[0]][departure[1]]['color'] = org_color
                         return True
         else:
             # Left line
@@ -482,7 +487,7 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                 ):
                     if not (arrival[0] - rkg == 0 and arrival[1] < ckg and
                             ckg - arrival[1] <= dist):
-                        board[departure[0]][departure[1]]['color'] = color
+                        board[departure[0]][departure[1]]['color'] = org_color
                         return True
 
     elif delta_col == 0:
@@ -499,7 +504,7 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                 ):
                     if not (arrival[1] - ckg == 0 and arrival[0] > rkg and
                             arrival[0] - rkg <= dist):
-                        board[departure[0]][departure[1]]['color'] = color
+                        board[departure[0]][departure[1]]['color'] = org_color
                         return True
         else:
             # Up line
@@ -514,7 +519,7 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                 ):
                     if not (arrival[1] - ckg == 0 and arrival[0] < rkg and
                             rkg - arrival[0] <= dist):
-                        board[departure[0]][departure[1]]['color'] = color
+                        board[departure[0]][departure[1]]['color'] = org_color
                         return True
 
     elif abs(delta_row) == abs(delta_col):
@@ -530,15 +535,11 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                     _type = _piece['type']
                     if _piece['color'] == enemy_col and (
                             _type == 'queen' or
-                            _type == 'bishop' or
-                            (dist == 1 and (
-                                _type == 'king' or
-                                (color == 'black' and _type == 'pawn')
-                            ))
+                            _type == 'bishop'
                     ):
                         if not (arrival[0] - rkg == arrival[1] - ckg and
                                 arrival[0] - rkg <= dist):
-                            board[departure[0]][departure[1]]['color'] = color
+                            board[departure[0]][departure[1]]['color'] = org_color
                             return True
             else:
                 # Down Left diag
@@ -551,15 +552,11 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                     _type = _piece['type']
                     if _piece['color'] == enemy_col and (
                             _type == 'queen' or
-                            _type == 'bishop' or
-                            (dist == 1 and (
-                                _type == 'king' or
-                                (color == 'black' and _type == 'pawn')
-                            ))
+                            _type == 'bishop'
                     ):
                         if not (arrival[0] - rkg == ckg - arrival[1] and
                                 arrival[0] - rkg <= dist):
-                            board[departure[0]][departure[1]]['color'] = color
+                            board[departure[0]][departure[1]]['color'] = org_color
                             return True
 
         else:
@@ -574,15 +571,11 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                     _type = _piece['type']
                     if _piece['color'] == enemy_col and (
                             _type == 'queen' or
-                            _type == 'bishop' or
-                            (dist == 1 and (
-                                _type == 'king' or
-                                (color == 'white' and _type == 'pawn')
-                            ))
+                            _type == 'bishop'
                     ):
                         if not (rkg - arrival[0] == arrival[1] - ckg and
                                 rkg - arrival[0] <= dist):
-                            board[departure[0]][departure[1]]['color'] = color
+                            board[departure[0]][departure[1]]['color'] = org_color
                             return True
             else:
                 # Up Left diag
@@ -595,19 +588,24 @@ def fast_is_check2(color, board, departure, arrival, kpos=None):
                     _type = _piece['type']
                     if _piece['color'] == enemy_col and (
                             _type == 'queen' or
-                            _type == 'bishop' or
-                            (dist == 1 and (
-                                _type == 'king' or
-                                (color == 'white' and _type == 'pawn')
-                            ))
+                            _type == 'bishop'
                     ):
                         if not (rkg - arrival[0] == ckg - arrival[1] and
                                 rkg - arrival[0] <= dist):
-                            board[departure[0]][departure[1]]['color'] = color
+                            board[departure[0]][departure[1]]['color'] = org_color
                             return True
 
-    board[departure[0]][departure[1]]['color'] = color
+    board[departure[0]][departure[1]]['color'] = org_color
     return False
+
+def is_enemy_check(enemy_color, board, departure, arrival,
+                   kpos):
+    """
+    To be used after play() method
+    """
+    rkg, ckg = kpos[enemy_color]
+    return kpos in available_movements_raw(arrival, board) or \
+        fast_is_check2(enemy_color, board, departure, arrival, kpos)
 
 def is_check_mate_or_draw(color, board):
     """
@@ -638,7 +636,7 @@ def get_score(color, board):
     return to_return
 
 def all_available_movements(color, board, current_score, kpos, castling_left,
-                            castling_right, pos_score=True):
+                            castling_right, am_i_check=None, pos_score=True):
     """
     Takes a color, a board a current score and returns a list of dict containing
         'from': departure location
@@ -691,8 +689,8 @@ def build_tree(color, board, depth, castling):
     killers = [None for _ in range(depth + 1)]
 
     def internal_evaluate(current_board, current_cast, current_depth,
-                          current_score, current_kpos, current_color, alpha,
-                          beta):
+                          current_score, current_kpos, current_color,
+                          current_checked, alpha, beta):
         """
         Returns subtree, current_lambda, best_index
         """
@@ -702,7 +700,8 @@ def build_tree(color, board, depth, castling):
                                         current_score, current_kpos,
                                         current_cast[current_color]['left'],
                                         current_cast[current_color]['right'],
-                                        current_color == color)
+                                        pos_score=current_color == color,
+                                        am_i_check=current_checked)
 
         # Positive if current color is hero's one
         sign = 2 * int(current_color == color) - 1
@@ -768,6 +767,13 @@ def build_tree(color, board, depth, castling):
                 move['score'],
                 current_kpos,
                 enemy(current_color),
+                is_enemy_check(
+                    enemy(color),
+                    current_board,
+                    move['from'],
+                    move['to'],
+                    current_kpos
+                ),
                 new_alpha,
                 new_beta,
             )
@@ -807,7 +813,8 @@ def build_tree(color, board, depth, castling):
     }
     t1 = time()
     tr, _, best_index = internal_evaluate(deepcopy(board), castling, depth,
-                                          current_score, kpos, color, -5000,
+                                          current_score, kpos, color,
+                                          is_check2(color, board, kpos), -5000,
                                           5000)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
@@ -867,7 +874,7 @@ def sort_by_interest(tree, color, maximize, board, kpos, randomize=False,
             index -= 1
         # List all in danger pieces
         enemy_moves = all_available_movements(enemy(color), board, 0, kpos,
-                                              False, False, True)
+                                              False, False, pos_score=True)
         in_danger = []
         for elt in enemy_moves:
             if elt['score'] > 0:
