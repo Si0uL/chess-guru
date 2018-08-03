@@ -687,6 +687,7 @@ def build_tree(color, board, depth, castling):
     """
     current_score = get_score(color, board)
     killers = [None for _ in range(depth + 1)]
+    nodes_seen = [0]
 
     def internal_evaluate(current_board, current_cast, current_depth,
                           current_score, current_kpos, current_color,
@@ -694,8 +695,10 @@ def build_tree(color, board, depth, castling):
         """
         Returns subtree, current_lambda, best_index
         """
+        nodes_seen[0] += 1
         if current_depth == 0:
             return [], current_score, -1
+
         moves = all_available_movements(current_color, current_board,
                                         current_score, current_kpos,
                                         current_cast[current_color]['left'],
@@ -818,6 +821,8 @@ def build_tree(color, board, depth, castling):
                                           5000)
     t2 = time()
     print('Time Elapsed: %.2f s' % (t2-t1))
+    print('Nodes Explored: {}, {} n/s'.format(nodes_seen[0],
+                                              int(nodes_seen[0] / (t2 - t1))))
     return tr, best_index
 
 def readable_position(pos):
