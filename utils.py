@@ -804,7 +804,7 @@ def build_tree(color, board, depth, castling):
                 'right': old_cr,
             }
 
-            if new_alpha >= new_beta:
+            if new_alpha >= new_beta or new_alpha > 900 or new_beta < -900:
                 killers[current_depth] = move
                 break
 
