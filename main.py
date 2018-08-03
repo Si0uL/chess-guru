@@ -31,7 +31,7 @@ CASTLING = {
 }
 
 """
-with open('board.p', 'rb') as _file:
+with open('1_turn_checkmate_error.p', 'rb') as _file:
     BOARD, CASTLING, TURN = pickle.load(_file)
 """
 
@@ -131,7 +131,7 @@ def play_route(subpath):
 
 @app.route('/load')
 def load_board():
-    global BOARD, SCORE, CASTLING
+    global BOARD, CASTLING, TURN, MISSING
     with open('board.p', 'rb') as _file:
         BOARD, CASTLING, TURN = pickle.load(_file)
     MISSING = missing_pieces(BOARD)
@@ -145,7 +145,6 @@ def autoplay():
         return redirect('/')
 
     # find the best move
-    global TURN
     tree, best_index = build_tree(TURN, BOARD, DEPTH, CASTLING)
 
     # Get departure/arrival positions
