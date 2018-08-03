@@ -923,3 +923,32 @@ def missing_pieces(board):
                 to_return[_color].append(_type)
     to_return['black'].reverse()
     return to_return
+
+def print_board(board):
+    """
+    To print a board in console.
+    """
+    def _print_piece(piece):
+        initials = {
+            'pawn': 'p',
+            'rook': 'r',
+            'knight': 'k',
+            'bishop': 'b',
+            'queen': 'q',
+            'king': 'g',
+        }
+        if piece['color'] == 'blank':
+            print('   ', end=' ')
+        elif piece['color'] == 'black':
+            print(' B' + initials[piece['type']], end=' ')
+        else:
+            print(' W' + initials[piece['type']], end=' ')
+
+    line = '\n' + '-' * (8 * 4 + 9)
+    for row in board:
+        print(line)
+        print('|', end='')
+        for piece in row:
+            _print_piece(piece)
+            print('|', end='')
+    print(line)
