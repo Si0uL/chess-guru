@@ -380,7 +380,8 @@ def _is_in_danger(position, board):
         _piece = board[row - dist][col]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -392,7 +393,8 @@ def _is_in_danger(position, board):
         _piece = board[row][col + dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -404,7 +406,8 @@ def _is_in_danger(position, board):
         _piece = board[row + dist][col]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -416,7 +419,8 @@ def _is_in_danger(position, board):
         _piece = board[row][col - dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
