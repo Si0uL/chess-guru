@@ -382,7 +382,8 @@ def is_check2(color, board, kpos=None):
         _piece = board[rkg - dist][ckg]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -394,7 +395,8 @@ def is_check2(color, board, kpos=None):
         _piece = board[rkg][ckg + dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -406,7 +408,8 @@ def is_check2(color, board, kpos=None):
         _piece = board[rkg + dist][ckg]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
@@ -418,7 +421,8 @@ def is_check2(color, board, kpos=None):
         _piece = board[rkg][ckg - dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
-                _piece['type'] == 'rook'
+                _piece['type'] == 'rook' or
+                (dist == 1 and _piece['type'] == 'king')
         ):
             return True
 
