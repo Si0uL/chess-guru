@@ -12,7 +12,6 @@ from utils import (
     print_board,
     get_score,
     missing_pieces,
-    is_check_mate_or_draw,
     available_movements_raw,
     is_check2,
     fast_is_check2,
@@ -250,9 +249,13 @@ class ChessGame(object):
     @property
     def am_i_finished(self):
         """
-        Calls is_check_mate_or_draw to determine if the game if finished
+        Tests if a situation is a checkmate or a draw
         """
-        return is_check_mate_or_draw(self.turn, self.board)
+        if not self.all_available_movements(self.turn, 0):
+            if self.am_i_check():
+                return True, 'mate'
+            return True, 'draw'
+        return False, ''
 
 
     def am_i_check(self, color=None):
