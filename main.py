@@ -1,7 +1,6 @@
 from flask import Flask, render_template, redirect
 
 from game import ChessGame
-from utils import build_tree
 
 app = Flask(__name__)
 
@@ -99,7 +98,7 @@ def autoplay():
         return redirect('/')
 
     # find the best move
-    tree, best_index = build_tree(GAME.turn, GAME.board, DEPTH, GAME.castling)
+    tree, best_index = GAME.build_tree(DEPTH)
 
     # Get departure/arrival positions
     srow, scol = tree[best_index]['from']

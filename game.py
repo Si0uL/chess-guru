@@ -4,6 +4,7 @@ Chess game object
 
 from copy import deepcopy
 import pickle
+from time import time
 
 from board import BOARD
 from utils import (
@@ -15,6 +16,7 @@ from utils import (
     is_check2,
     fast_is_check2,
     score_per_play,
+    sort_by_interest,
 )
 
 
@@ -398,3 +400,123 @@ class ChessGame(object):
                         })
 
         return to_return
+
+
+    def build_tree(self, depth):
+        """
+        Constructs a tree of possible actions
+        """
+        killers = [None for _ in range(depth + 1)]
+        nodes_seen = [0]
+        is_hero_white = self.white_turn
+
+        def internal_evaluate(current_depth, current_score, current_checked,
+                              alpha, beta):
+            """
+            Returns subtree, current_lambda, best_index
+            """
+            nodes_seen[0] += 1
+            if current_depth == 0:
+                return [], current_score, -1
+
+            moves = self.all_available_movements(
+                self.turn,
+                current_score,
+                pos_score=self.white_turn == is_hero_white,
+                am_i_check=None
+            )
+
+            # Positive if current color is hero's one
+            sign = 2 * (self.white_turn == is_hero_white) - 1
+
+            # Treat checkmate and draw cases
+            if not moves:
+                if self.am_i_check(color=self.turn):
+                    return [], -sign*1000, -1
+                return [], 0, -1
+
+            new_alpha, new_beta = alpha, beta
+
+            if sign == 1:
+                nu = -5000
+            else:
+                nu = 5000
+
+            best_index = -1
+
+            sort_by_interest(
+                moves,
+                self.turn,
+                self.white_turn == is_hero_white,
+                self.board,
+                self.king_position,
+                randomize=depth - current_depth < 2,
+                danger_first=depth - current_depth < 4,
+                checkers_first=depth - current_depth < 4,
+                killer_move=killers[current_depth],
+            )
+
+            for n, move in enumerate(moves):
+
+                if current_depth == depth:
+                    print('{}/{} {} {} -> {}'.format(
+                        str(n+1).zfill(2),
+                        len(moves),
+                        self.board[move['from'][0]]
+                            [move['from'][1]]['type'].ljust(6),
+                        move['from'],
+                        move['to'],
+                    ))
+                    print('{}%'.format(int(100*n/len(moves))), end='\r')
+
+                unplay_infos = self.play(move['from'], move['to'])
+
+                next_list, next_nu, _ = internal_evaluate(
+                    current_depth - 1,
+                    move['score'],
+                    # TODO: use is_enemy_check
+                    False,
+                    new_alpha,
+                    new_beta,
+                )
+
+                move['next'] = next_list
+
+                # Hero play (maximiser)
+                if sign == 1 and next_nu > nu:
+                    nu = next_nu
+                    best_index = n
+                if sign == -1 and next_nu < nu:
+                    nu = next_nu
+                    best_index = n
+
+                # update alpha, beta (avoiding using min/max)
+                if sign == 1 and nu > new_alpha:
+                    new_alpha = next_nu
+                if sign == -1 and nu < new_beta:
+                    new_beta = next_nu
+
+                self.unplay(*unplay_infos)
+
+                if new_alpha >= new_beta or new_alpha > 900 or new_beta < -900:
+                    killers[current_depth] = move
+                    break
+
+            return moves, nu, best_index
+
+        time_start = time()
+        tree, _, best_index = internal_evaluate(
+            depth,
+            self.score(),
+            is_check2(self.turn, self.board, self.king_position),
+            -5000,
+            5000
+        )
+
+        elapsed = time()-time_start
+        print('Time Elapsed: {:.2f} s'.format(elapsed))
+        print('Nodes Explored: {}, {:.0f} n/s'.format(
+            nodes_seen[0],
+            nodes_seen[0] / elapsed
+        ))
+        return tree, best_index
