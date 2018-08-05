@@ -249,8 +249,7 @@ class ChessGame(object):
         """
         Calls is_check_mate_or_draw to determine if the game if finished
         """
-        str_turn = 'white' if self.white_turn else 'black'
-        return is_check_mate_or_draw(str_turn, self.board)
+        return is_check_mate_or_draw(self.turn, self.board)
 
 
     def am_i_check(self, color=None):
@@ -259,8 +258,19 @@ class ChessGame(object):
         turn by default.
         """
         if color is None:
-            color = 'white' if self.white_turn else 'black'
+            color = self.turn
         return is_check2(color, self.board, self.king_position)
+
+
+    def am_i_check_fast(self, start, arrival, color=None):
+        """
+        Uses fast_is_check2 to determine wheter or not your are checked.
+        Uses current turn by default.
+        """
+        if color is None:
+            color = self.turn
+        return fast_is_check2(color, self.board, start, arrival,
+                              self.king_position)
 
 
     def available_movements(self, location, am_i_check=None):
@@ -272,17 +282,14 @@ class ChessGame(object):
         """
         to_return = []
         board = self.board
-        kpos = self.king_position
         color = board[location[0]][location[1]]['color']
         type_ = board[location[0]][location[1]]['type']
-        castling_left = self.castling[color]['left']
-        castling_right = self.castling[color]['right']
 
         if am_i_check is None:
             am_i_check = self.am_i_check()
 
-        if am_i_check:
-            castling_left = castling_right = False
+        castling_left = self.castling[color]['left'] and not am_i_check
+        castling_right = self.castling[color]['right'] and not am_i_check
 
         use_slow = am_i_check or type_ == 'king'
 
@@ -290,12 +297,12 @@ class ChessGame(object):
 
             if use_slow:
                 unplay_infos = self.play(location, arrival, update_cast=False)
-                if not is_check2(color, board, kpos):
+                if not self.am_i_check(color):
                     to_return.append(arrival)
                 self.unplay(*unplay_infos)
 
             else:
-                if not fast_is_check2(color, board, location, arrival, kpos):
+                if not self.am_i_check_fast(location, arrival, color=color):
                     to_return.append(arrival)
 
 
@@ -310,12 +317,12 @@ class ChessGame(object):
                 # Check if in check on the way
                 unplay_infos = self.play(location, (row, location[1] - 1),
                                          update_cast=False)
-                if not is_check2(color, board, kpos):
+                if not self.am_i_check(color):
                     # Check if not checked at arrival
                     unplay_infos2 = self.play((row, location[1] - 1),
                                               (row, location[1] - 2),
                                               update_cast=False)
-                    if not is_check2(color, board, kpos):
+                    if not self.am_i_check(color):
                         to_return.append((row, location[1] - 2))
                     self.unplay(*unplay_infos2)
                 self.unplay(*unplay_infos)
@@ -326,12 +333,12 @@ class ChessGame(object):
                 # Check if in check on the way
                 unplay_infos = self.play(location, (row, location[1] + 1),
                                          update_cast=False)
-                if not is_check2(color, board, kpos):
+                if not self.am_i_check(color):
                     # Check if not checked at arrival
                     unplay_infos2 = self.play((row, location[1] + 1),
                                               (row, location[1] + 2),
                                               update_cast=False)
-                    if not is_check2(color, board, kpos):
+                    if not self.am_i_check(color):
                         to_return.append((row, location[1] + 2))
                     self.unplay(*unplay_infos2)
                 self.unplay(*unplay_infos)
