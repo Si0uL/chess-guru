@@ -1,12 +1,11 @@
-import pickle
-from utils import *
+from game import ChessGame
 
-with open('2_turn_checkmate.p', 'rb') as _file:
-    board, castling, turn = pickle.load(_file)
+game = ChessGame()
+game.load('board.p')
 
-print_board(board)
+game.display()
 
-tree, best_index = build_tree(turn, board, 6, castling)
+tree, best_index = game.build_tree(6)
 
 best_elt = tree[best_index]
 
