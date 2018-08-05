@@ -5,6 +5,7 @@ Chess game object
 from copy import deepcopy
 import pickle
 from time import time
+from random import shuffle
 
 from board import BOARD
 from utils import (
@@ -16,7 +17,6 @@ from utils import (
     is_check2,
     fast_is_check2,
     score_per_play,
-    sort_by_interest,
 )
 
 
@@ -410,6 +410,71 @@ class ChessGame(object):
         nodes_seen = [0]
         is_hero_white = self.white_turn
 
+        def sort_by_interest(tree, randomize=False, danger_first=False,
+                             checkers_first=False, killer_move=None):
+            """
+            Unefficient function to sort nodes from a tree in order of potential
+            interest (check positions first, then enemy pieces killing)
+            """
+            maximize = self.white_turn == is_hero_white
+
+            # Randomize first
+            if randomize:
+                shuffle(tree)
+            _sorted = 0
+
+            # Killer move first
+            if not killer_move is None:
+                for n, elt in enumerate(tree):
+                    if elt['from'] == killer_move['from'] and \
+                        elt['to'] == killer_move['to']:
+                        tree[0], tree[n] = tree[n], tree[0]
+                        _sorted += 1
+                        break
+
+            # Checkers first
+            if checkers_first:
+                for n in range(_sorted + 1, len(tree)):
+                    unplay_data = self.play(tree[n]['from'], tree[n]['to'])
+                    if self.am_i_check():
+                        tree[_sorted], tree[n] = tree[n], tree[_sorted]
+                        _sorted += 1
+                    self.unplay(*unplay_data)
+
+            # Basic sorting method by direct score (kills first !)
+            for i in range(_sorted + 1, len(tree)):
+                _idx = i
+                _max_or_min = tree[i]['score']
+                for j in range(i + 1, len(tree)):
+                    if maximize and tree[j]['score'] > _max_or_min:
+                        _max_or_min = tree[j]['score']
+                        _idx = j
+                    if (not maximize) and tree[j]['score'] > _max_or_min:
+                        _max_or_min = tree[j]['score']
+                        _idx = j
+                tree[i], tree[_idx] = tree[_idx], tree[i]
+
+            if danger_first:
+                # Avoid kill first (amongst null scores)
+                # index is to be at the beginning of null score
+                index = len(tree) - 1
+                while index >= 0 and tree[index]['score'] == tree[-1]['score']:
+                    index -= 1
+                # List all in danger pieces
+                in_danger = []
+                enemy_moves = self.all_available_movements(
+                    'black' if self.white_turn else 'white',
+                    0,
+                )
+                for elt in enemy_moves:
+                    if elt['score'] > 0:
+                        in_danger.append(elt['to'])
+                # Put endangered pieces moves first (after other sorted pieces)
+                for idx2 in range(index, len(tree)):
+                    if tree[idx2]['from'] in in_danger:
+                        tree[index], tree[idx2] = tree[idx2], tree[index]
+                        index += 1
+
         def internal_evaluate(current_depth, current_score, current_checked,
                               alpha, beta):
             """
@@ -446,10 +511,6 @@ class ChessGame(object):
 
             sort_by_interest(
                 moves,
-                self.turn,
-                self.white_turn == is_hero_white,
-                self.board,
-                self.king_position,
                 randomize=depth - current_depth < 2,
                 danger_first=depth - current_depth < 4,
                 checkers_first=depth - current_depth < 4,
