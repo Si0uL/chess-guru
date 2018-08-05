@@ -14,6 +14,7 @@ from utils import (
     available_movements_raw,
     is_check2,
     fast_is_check2,
+    score_per_play,
 )
 
 
@@ -342,5 +343,58 @@ class ChessGame(object):
                         to_return.append((row, location[1] + 2))
                     self.unplay(*unplay_infos2)
                 self.unplay(*unplay_infos)
+
+        return to_return
+
+
+    def all_available_movements(self, color, current_score, am_i_check=None,
+                                pos_score=True):
+        """
+        Takes a color, a board a current score and returns a list of dict
+        containing:
+            'from': departure location
+            'to': arrival location
+            'score': next score after this play
+            'next': empty list to be used in evaluate_best
+        """
+        to_return = []
+        tr_app = to_return.append
+        castling_left = self.castling[color]['left']
+        castling_right = self.castling[color]['right']
+        for r_nb, row in enumerate(self.board):
+            for c_nb, piece in enumerate(row):
+                if piece['color'] == color:
+                    amv = self.available_movements((r_nb, c_nb),
+                                                   am_i_check=am_i_check)
+                    for new_r, new_c in amv:
+                        new_score = current_score + \
+                            score_per_play((new_r, new_c), self.board) * \
+                                (2*int(pos_score)-1)
+                        # Bring a pawn to the edge -> +/- 8
+                        if piece['type'] == 'pawn' and \
+                            (new_r == 0 or new_r == 7):
+                            new_score += 8 * (2*int(pos_score)-1)
+
+                        # Castling: fictive +0.1 bonus
+                        krow = 7 if color == 'white' else 0
+                        if piece['type'] == 'king' and abs(new_c - c_nb) == 2:
+                            new_score += 0.1 * (2*int(pos_score)-1)
+
+                        # Lose both future castling: fictive -0.1
+                        elif castling_left and not castling_right and \
+                            (r_nb, c_nb) == (krow, 0):
+                            new_score -= 0.1 * (2*int(pos_score)-1)
+                        elif castling_right and not castling_left and \
+                            (r_nb, c_nb) == (krow, 7):
+                            new_score -= 0.1 * (2*int(pos_score)-1)
+                        elif (castling_right or castling_left) and \
+                            piece['type'] == 'king':
+                            new_score -= 0.1 * (2*int(pos_score)-1)
+
+                        tr_app({
+                            'from': (r_nb, c_nb),
+                            'to': (new_r, new_c),
+                            'score': new_score,
+                        })
 
         return to_return
