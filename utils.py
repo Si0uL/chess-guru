@@ -291,24 +291,22 @@ def enemy(color):
         return 'white'
     return None
 
-def is_check2(color, board, kpos=None):
+def _is_in_danger(position, board):
     """
-    Quicker version of is_check
-    Takes a color and a board and returns a boolean whether the player is check
-    or not
+    Checks if the piece located at position is in danger (in sight of an enemy
+    piece)
     """
+    row, col = position
+    color = board[row][col]['color']
     enemy_col = enemy(color)
-    if kpos is None:
-        rkg, ckg = king_position(color, board)
-    else:
-        rkg, ckg = kpos[color]
+
     # Down Right diag
     dist = 1
-    while rkg + dist < 8 and ckg + dist < 8 and \
-        board[rkg + dist][ckg + dist]['color'] == 'blank':
+    while row + dist < 8 and col + dist < 8 and \
+        board[row + dist][col + dist]['color'] == 'blank':
         dist += 1
-    if rkg + dist < 8 and ckg + dist < 8:
-        _piece = board[rkg + dist][ckg + dist]
+    if row + dist < 8 and col + dist < 8:
+        _piece = board[row + dist][col + dist]
         _type = _piece['type']
         if _piece['color'] == enemy_col and (
                 _type == 'queen' or
@@ -322,11 +320,11 @@ def is_check2(color, board, kpos=None):
 
     # Down Left diag
     dist = 1
-    while rkg + dist < 8 and ckg - dist >= 0 and \
-        board[rkg + dist][ckg - dist]['color'] == 'blank':
+    while row + dist < 8 and col - dist >= 0 and \
+        board[row + dist][col - dist]['color'] == 'blank':
         dist += 1
-    if rkg + dist < 8 and ckg - dist >= 0:
-        _piece = board[rkg + dist][ckg - dist]
+    if row + dist < 8 and col - dist >= 0:
+        _piece = board[row + dist][col - dist]
         _type = _piece['type']
         if _piece['color'] == enemy_col and (
                 _type == 'queen' or
@@ -340,11 +338,11 @@ def is_check2(color, board, kpos=None):
 
     # Up Left diag
     dist = 1
-    while rkg - dist >= 0 and ckg - dist >= 0 and \
-        board[rkg - dist][ckg - dist]['color'] == 'blank':
+    while row - dist >= 0 and col - dist >= 0 and \
+        board[row - dist][col - dist]['color'] == 'blank':
         dist += 1
-    if rkg - dist >= 0 and ckg - dist >= 0:
-        _piece = board[rkg - dist][ckg - dist]
+    if row - dist >= 0 and col - dist >= 0:
+        _piece = board[row - dist][col - dist]
         _type = _piece['type']
         if _piece['color'] == enemy_col and (
                 _type == 'queen' or
@@ -358,11 +356,11 @@ def is_check2(color, board, kpos=None):
 
     # Up Right diag
     dist = 1
-    while rkg - dist >= 0 and ckg + dist < 8 and \
-        board[rkg - dist][ckg + dist]['color'] == 'blank':
+    while row - dist >= 0 and col + dist < 8 and \
+        board[row - dist][col + dist]['color'] == 'blank':
         dist += 1
-    if rkg - dist >= 0 and ckg + dist < 8:
-        _piece = board[rkg - dist][ckg + dist]
+    if row - dist >= 0 and col + dist < 8:
+        _piece = board[row - dist][col + dist]
         _type = _piece['type']
         if _piece['color'] == enemy_col and (
                 _type == 'queen' or
@@ -376,10 +374,10 @@ def is_check2(color, board, kpos=None):
 
     # Up line
     dist = 1
-    while rkg - dist >= 0 and board[rkg - dist][ckg]['color'] == 'blank':
+    while row - dist >= 0 and board[row - dist][col]['color'] == 'blank':
         dist += 1
-    if rkg - dist >= 0:
-        _piece = board[rkg - dist][ckg]
+    if row - dist >= 0:
+        _piece = board[row - dist][col]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
                 _piece['type'] == 'rook'
@@ -388,10 +386,10 @@ def is_check2(color, board, kpos=None):
 
     # Right line
     dist = 1
-    while ckg + dist < 8 and board[rkg][ckg + dist]['color'] == 'blank':
+    while col + dist < 8 and board[row][col + dist]['color'] == 'blank':
         dist += 1
-    if ckg + dist < 8:
-        _piece = board[rkg][ckg + dist]
+    if col + dist < 8:
+        _piece = board[row][col + dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
                 _piece['type'] == 'rook'
@@ -400,10 +398,10 @@ def is_check2(color, board, kpos=None):
 
     # Down line
     dist = 1
-    while rkg + dist < 8 and board[rkg + dist][ckg]['color'] == 'blank':
+    while row + dist < 8 and board[row + dist][col]['color'] == 'blank':
         dist += 1
-    if rkg + dist < 8:
-        _piece = board[rkg + dist][ckg]
+    if row + dist < 8:
+        _piece = board[row + dist][col]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
                 _piece['type'] == 'rook'
@@ -412,10 +410,10 @@ def is_check2(color, board, kpos=None):
 
     # Left line
     dist = 1
-    while ckg - dist >= 0 and board[rkg][ckg - dist]['color'] == 'blank':
+    while col - dist >= 0 and board[row][col - dist]['color'] == 'blank':
         dist += 1
-    if ckg - dist >= 0:
-        _piece = board[rkg][ckg - dist]
+    if col - dist >= 0:
+        _piece = board[row][col - dist]
         if _piece['color'] == enemy_col and (
                 _piece['type'] == 'queen' or
                 _piece['type'] == 'rook'
@@ -426,13 +424,25 @@ def is_check2(color, board, kpos=None):
     knight_moves = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (-1, 2),
                     (1, -2), (-1, -2)]
     for addr, addc in knight_moves:
-        nr, nc = rkg + addr, ckg + addc
+        nr, nc = row + addr, col + addc
         if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
             board[nr][nc]['color'] == enemy_col and \
             board[nr][nc]['type'] == 'knight':
             return True
 
     return False
+
+def is_check2(color, board, kpos=None):
+    """
+    Quicker version of is_check
+    Takes a color and a board and returns a boolean whether the player is check
+    or not
+    """
+    if kpos is None:
+        position = king_position(color, board)
+    else:
+        position = kpos[color]
+    return _is_in_danger(position, board)
 
 def fast_is_check2(color, board, departure, arrival, kpos=None):
     """
