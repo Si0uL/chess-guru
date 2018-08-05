@@ -650,7 +650,8 @@ def all_available_movements(color, board, current_score, kpos, castling_left,
         for c, piece in enumerate(row):
             if piece['color'] == color:
                 amv = available_movements((r, c), board, castling_left,
-                                          castling_right, kpos)
+                                          castling_right, kpos=kpos,
+                                          am_i_check=am_i_check)
                 for nr, nc in amv:
                     new_score = current_score + \
                         score_per_play((nr, nc), board)*(2*int(pos_score)-1)
@@ -704,7 +705,7 @@ def build_tree(color, board, depth, castling):
                                         current_cast[current_color]['left'],
                                         current_cast[current_color]['right'],
                                         pos_score=current_color == color,
-                                        am_i_check=current_checked)
+                                        am_i_check=None)
 
         # Positive if current color is hero's one
         sign = 2 * int(current_color == color) - 1
