@@ -16,6 +16,7 @@ from utils import (
     is_check2,
     fast_is_check2,
     score_per_play,
+    readable_position,
 )
 
 
@@ -528,8 +529,8 @@ class ChessGame(object):
                         len(moves),
                         self.board[move['from'][0]]
                             [move['from'][1]]['type'].ljust(6),
-                        move['from'],
-                        move['to'],
+                        readable_position(move['from']),
+                        readable_position(move['to']),
                     ))
                     print('{}%'.format(int(100*n/len(moves))), end='\r')
 
