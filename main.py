@@ -74,6 +74,7 @@ def play_route(subpath):
     # Autosave in board.p on white's turns
     if AUTOSAVE:
         GAME.save('board.p')
+        GAME.save_for_c_engine('board.txt')
 
     # update FINISHED boolean
     FINISHED, _ = GAME.am_i_finished

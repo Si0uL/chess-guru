@@ -237,6 +237,32 @@ class ChessGame(object):
             ], _file)
 
 
+    def save_for_c_engine(self, path):
+        """
+        Save the board as a text file, to be parsed & used by the C engine
+        """
+        correspondance = {
+            "pawn": 1,
+            "rook": 2,
+            "knight": 3,
+            "bishop": 4,
+            "queen": 5,
+            "king": 6,
+        }
+        to_dump = "w_turn = {}\n".format(int(self.white_turn))
+        for row in range(7, -1, -1):
+            for col in range(8):
+                if self.board[row][col]["color"] == "blank":
+                    to_dump += "0\n"
+                else:
+                    to_dump += "{}\n".format(
+                        (2*int(self.board[row][col]["color"] == "white") - 1) *\
+                        correspondance[self.board[row][col]["type"]]
+                    )
+        with open(path, 'w') as _file:
+            _file.write(to_dump)
+
+
     def load(self, path):
         """
         Loads a file and changes the object to match the stored one.
