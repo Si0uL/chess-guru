@@ -7,7 +7,7 @@ import pickle
 from time import time
 from random import shuffle
 
-from board import BOARD
+from board import Piece, BOARD
 from utils import (
     print_board,
     get_score,
@@ -53,8 +53,8 @@ class ChessGame(object):
         self.king_position = {}
         for r_nb, row in enumerate(self.board):
             for c_nb, piece in enumerate(row):
-                if piece.get('type') == 'king':
-                    self.king_position[piece['color']] = (r_nb, c_nb)
+                if piece.type == 'king':
+                    self.king_position[piece.color] = (r_nb, c_nb)
 
         # Init Unplay Infos
         self.unplay_infos = []
@@ -124,39 +124,30 @@ class ChessGame(object):
         """
         former_start = self.board[start[0]][start[1]]
         former_arrival = self.board[arrival[0]][arrival[1]]
-        color = former_start['color']
+        color = former_start.color
         self.board[arrival[0]][arrival[1]] = former_start
-        self.board[start[0]][start[1]] = {'color': 'blank'}
+        self.board[start[0]][start[1]] = Piece('blank')
         # If pawn at edge: transform it into a queen by default
-        if former_start['type'] == 'pawn' and \
+        if former_start.type == 'pawn' and \
             (arrival[0] == 0 or arrival[0] == 7):
             # Recreate an object to avoid side effects
-            self.board[arrival[0]][arrival[1]] = {
-                'type': 'queen',
-                'color': color,
-            }
+            self.board[arrival[0]][arrival[1]] = Piece(color, 'queen')
         # If king castling: move also the rook:
-        if former_start['type'] == 'king' and abs(start[1] - arrival[1]) == 2:
+        if former_start.type == 'king' and abs(start[1] - arrival[1]) == 2:
             # Left castling
             if arrival[1] == 2:
-                self.board[start[0]][3] = {
-                    'type': 'rook',
-                    'color': color
-                }
-                self.board[start[0]][0] = {'color': 'blank'}
+                self.board[start[0]][3] = Piece(color, 'rook')
+                self.board[start[0]][0] = Piece('blank')
             # Right castling
             if arrival[1] == 6:
-                self.board[start[0]][5] = {
-                    'type': 'rook',
-                    'color': color
-                }
-                self.board[start[0]][7] = {'color': 'blank'}
+                self.board[start[0]][5] = Piece(color, 'rook')
+                self.board[start[0]][7] = Piece('blank')
 
         # Update turn:
         self.white_turn = not self.white_turn
 
         # Update kpos
-        if former_start['type'] == 'king':
+        if former_start.type == 'king':
             self.king_position[color] = arrival
 
         unplay_infos = (
@@ -194,23 +185,17 @@ class ChessGame(object):
 
         self.board[start[0]][start[1]] = former_start
         self.board[arrival[0]][arrival[1]] = former_arrival
-        color = former_start['color']
+        color = former_start.color
         # If king castling: move also the rook:
-        if former_start['type'] == 'king' and abs(start[1] - arrival[1]) == 2:
+        if former_start.type == 'king' and abs(start[1] - arrival[1]) == 2:
             # Left castling
             if arrival[1] == 2:
-                self.board[start[0]][0] = {
-                    'type': 'rook',
-                    'color': color
-                }
-                self.board[start[0]][3] = {'color': 'blank'}
+                self.board[start[0]][0] = Piece(color, 'rook')
+                self.board[start[0]][3] = Piece('blank')
             # Right castling
             if arrival[1] == 6:
-                self.board[start[0]][7] = {
-                    'type': 'rook',
-                    'color': color
-                }
-                self.board[start[0]][5] = {'color': 'blank'}
+                self.board[start[0]][7] = Piece(color, 'rook')
+                self.board[start[0]][5] = Piece('blank')
 
         # Update turn:
         self.white_turn = not self.white_turn
@@ -220,7 +205,7 @@ class ChessGame(object):
         self.castling[color]['right'] = c_right
 
         # Update kpos
-        if former_start['type'] == 'king':
+        if former_start.type == 'king':
             self.king_position[color] = start
 
 
@@ -252,12 +237,12 @@ class ChessGame(object):
         to_dump = "w_turn = {}\n".format(int(self.white_turn))
         for row in range(7, -1, -1):
             for col in range(8):
-                if self.board[row][col]["color"] == "blank":
+                if self.board[row][col].is_blank:
                     to_dump += "0\n"
                 else:
                     to_dump += "{}\n".format(
-                        (2*int(self.board[row][col]["color"] == "white") - 1) *\
-                        correspondance[self.board[row][col]["type"]]
+                        (2*int(self.board[row][col].color == "white") - 1) *\
+                        correspondance[self.board[row][col].type]
                     )
         with open(path, 'w') as _file:
             _file.write(to_dump)
@@ -315,8 +300,8 @@ class ChessGame(object):
         """
         to_return = []
         board = self.board
-        color = board[location[0]][location[1]]['color']
-        type_ = board[location[0]][location[1]]['type']
+        color = board[location[0]][location[1]].color
+        type_ = board[location[0]][location[1]].type
 
         if am_i_check is None:
             am_i_check = self.am_i_check()
@@ -344,9 +329,9 @@ class ChessGame(object):
         if type_ == 'king' and (castling_left or castling_right):
             row = location[0]
             # If left castling is available and there is no "obstacle" -> go
-            if castling_left and board[row][1]['color'] == 'blank' and \
-                board[row][2]['color'] == 'blank' and \
-                board[row][3]['color'] == 'blank':
+            if castling_left and board[row][1].is_blank and \
+                board[row][2].is_blank and \
+                board[row][3].is_blank:
                 # Check if in check on the way
                 unplay_infos = self.play(location, (row, location[1] - 1),
                                          update_cast=False)
@@ -361,8 +346,8 @@ class ChessGame(object):
                 self.unplay(*unplay_infos)
 
             # If right castling is available and there is no "obstacle" -> go
-            if castling_right and board[row][5]['color'] == 'blank' and \
-                board[row][6]['color'] == 'blank':
+            if castling_right and board[row][5].is_blank and \
+                board[row][6].is_blank:
                 # Check if in check on the way
                 unplay_infos = self.play(location, (row, location[1] + 1),
                                          update_cast=False)
@@ -395,7 +380,7 @@ class ChessGame(object):
         castling_right = self.castling[color]['right']
         for r_nb, row in enumerate(self.board):
             for c_nb, piece in enumerate(row):
-                if piece['color'] == color:
+                if piece.color == color:
                     amv = self.available_movements((r_nb, c_nb),
                                                    am_i_check=am_i_check)
                     for new_r, new_c in amv:
@@ -403,13 +388,13 @@ class ChessGame(object):
                             score_per_play((new_r, new_c), self.board) * \
                                 (2*int(pos_score)-1)
                         # Bring a pawn to the edge -> +/- 8
-                        if piece['type'] == 'pawn' and \
+                        if piece.type == 'pawn' and \
                             (new_r == 0 or new_r == 7):
                             new_score += 8 * (2*int(pos_score)-1)
 
                         # Castling: fictive +0.1 bonus
                         krow = 7 if color == 'white' else 0
-                        if piece['type'] == 'king' and abs(new_c - c_nb) == 2:
+                        if piece.type == 'king' and abs(new_c - c_nb) == 2:
                             new_score += 0.1 * (2*int(pos_score)-1)
 
                         # Lose both future castling: fictive -0.1
@@ -420,7 +405,7 @@ class ChessGame(object):
                             (r_nb, c_nb) == (krow, 7):
                             new_score -= 0.1 * (2*int(pos_score)-1)
                         elif (castling_right or castling_left) and \
-                            piece['type'] == 'king':
+                            piece.type == 'king':
                             new_score -= 0.1 * (2*int(pos_score)-1)
 
                         tr_app({
@@ -554,7 +539,7 @@ class ChessGame(object):
                         str(n+1).zfill(2),
                         len(moves),
                         self.board[move['from'][0]]
-                            [move['from'][1]]['type'].ljust(6),
+                            [move['from'][1]].type.ljust(6),
                         readable_position(move['from']),
                         readable_position(move['to']),
                     ))

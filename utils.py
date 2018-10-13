@@ -2,6 +2,8 @@ from time import time
 from copy import deepcopy
 from random import shuffle
 
+from board import Piece
+
 def available_movements_raw(location, board):
     """
     Takes a location and a board and return the available moves as a series of
@@ -10,71 +12,71 @@ def available_movements_raw(location, board):
     TODO: add castling and en-passant
     """
 
-    typ = board[location[0]][location[1]].get('type')
-    col = board[location[0]][location[1]]['color']
+    typ = board[location[0]][location[1]].type
+    col = board[location[0]][location[1]].color
 
     if typ == 'rook' or typ == 'queen':
         # down
         r, c = location[0] + 1, location[1]
-        while r < 8 and board[r][c]['color'] == 'blank':
+        while r < 8 and board[r][c].is_blank:
             yield (r, c)
             r += 1
-        if r < 8 and board[r][c]['color'] != col:
+        if r < 8 and board[r][c].color != col:
             yield (r, c)
         # up
         r, c = location[0] - 1, location[1]
-        while r > -1 and board[r][c]['color'] == 'blank':
+        while r > -1 and board[r][c].is_blank:
             yield (r, c)
             r -= 1
-        if r > -1 and board[r][c]['color'] != col:
+        if r > -1 and board[r][c].color != col:
             yield (r, c)
         # right
         r, c = location[0], location[1] + 1
-        while c < 8 and board[r][c]['color'] == 'blank':
+        while c < 8 and board[r][c].is_blank:
             yield (r, c)
             c += 1
-        if c < 8 and board[r][c]['color'] != col:
+        if c < 8 and board[r][c].color != col:
             yield (r, c)
         # left
         r, c = location[0], location[1] - 1
-        while c > -1 and board[r][c]['color'] == 'blank':
+        while c > -1 and board[r][c].is_blank:
             yield (r, c)
             c -= 1
-        if c > -1 and board[r][c]['color'] != col:
+        if c > -1 and board[r][c].color != col:
             yield (r, c)
 
     if typ == 'bishop' or typ == 'queen':
         # downright
         r, c = location[0] + 1, location[1] + 1
-        while r < 8 and c < 8 and board[r][c]['color'] == 'blank':
+        while r < 8 and c < 8 and board[r][c].is_blank:
             yield (r, c)
             r += 1
             c += 1
-        if r < 8 and c < 8 and board[r][c]['color'] != col:
+        if r < 8 and c < 8 and board[r][c].color != col:
             yield (r, c)
         # upright
         r, c = location[0] - 1, location[1] + 1
-        while r > -1 and c < 8 and board[r][c]['color'] == 'blank':
+        while r > -1 and c < 8 and board[r][c].is_blank:
             yield (r, c)
             r -= 1
             c += 1
-        if r > -1 and c < 8 and board[r][c]['color'] != col:
+        if r > -1 and c < 8 and board[r][c].color != col:
             yield (r, c)
         # upleft
         r, c = location[0] - 1, location[1] - 1
-        while r > -1 and c > -1 and board[r][c]['color'] == 'blank':
+        while r > -1 and c > -1 and board[r][c].is_blank:
             yield (r, c)
             r -= 1
             c -= 1
-        if r > -1 and c > -1 and board[r][c]['color'] != col:
+        if r > -1 and c > -1 and board[r][c].color != col:
             yield (r, c)
         # downleft
         r, c = location[0] + 1, location[1] - 1
-        while r < 8 and c > -1 and board[r][c]['color'] == 'blank':
+        while r < 8 and c > -1 and board[r][c].is_blank:
             yield (r, c)
             r += 1
             c -= 1
-        if r < 8 and c > -1 and board[r][c]['color'] != col:
+        if r < 8 and c > -1 and board[r][c].color != col:
             yield (r, c)
 
     elif typ == 'pawn':
@@ -82,24 +84,24 @@ def available_movements_raw(location, board):
         _sense = int(col == 'black')*2 - 1
 
         # Straight
-        if board[location[0] + _sense][location[1]]['color'] == 'blank':
+        if board[location[0] + _sense][location[1]].is_blank:
             yield (location[0] + _sense, location[1])
             # 2 straight
             if location[0] == 6 and col == 'white' and \
-                board[4][location[1]]['color'] == 'blank':
+                board[4][location[1]].is_blank:
                 yield (4, location[1])
             elif location[0] == 1 and col == 'black' and \
-                board[3][location[1]]['color'] == 'blank':
+                board[3][location[1]].is_blank:
                 yield (3, location[1])
             else:
                 pass
         # Kill an enemy (left)
         if location[1] != 0 and \
-            board[location[0] + _sense][location[1] - 1]['color'] == enemy(col):
+            board[location[0] + _sense][location[1] - 1].color == enemy(col):
             yield (location[0] + _sense, location[1] - 1)
         # Kill an enemy (right)
         if location[1] != 7 and \
-            board[location[0] + _sense][location[1] + 1]['color'] == enemy(col):
+            board[location[0] + _sense][location[1] + 1].color == enemy(col):
             yield (location[0] + _sense, location[1] + 1)
 
     elif typ == 'knight':
@@ -108,7 +110,7 @@ def available_movements_raw(location, board):
         for addr, addc in knight_moves:
             nr, nc = location[0] + addr, location[1] + addc
             if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
-                board[nr][nc]['color'] != col:
+                board[nr][nc].color != col:
                 yield(nr, nc)
 
     elif typ == 'king':
@@ -117,7 +119,7 @@ def available_movements_raw(location, board):
                 if not (addr == 0 and addc == 0):
                     nr, nc = location[0] + addr, location[1] + addc
                     if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
-                        board[nr][nc]['color'] != col:
+                        board[nr][nc].color != col:
                         yield(nr, nc)
 
 def score_per_play(arrival, board):
@@ -125,7 +127,7 @@ def score_per_play(arrival, board):
     Return positive score gain if movement kills a piece, else 0
     TODO: take into account piece creation
     """
-    _type = board[arrival[0]][arrival[1]].get('type')
+    _type = board[arrival[0]][arrival[1]].type
     if _type is None:
         return 0
     elif _type == 'pawn':
@@ -154,18 +156,18 @@ def _is_in_danger(position, board):
     piece)
     """
     row, col = position
-    color = board[row][col]['color']
+    color = board[row][col].color
     enemy_col = enemy(color)
 
     # Down Right diag
     dist = 1
     while row + dist < 8 and col + dist < 8 and \
-        board[row + dist][col + dist]['color'] == 'blank':
+        board[row + dist][col + dist].is_blank:
         dist += 1
     if row + dist < 8 and col + dist < 8:
         _piece = board[row + dist][col + dist]
-        _type = _piece['type']
-        if _piece['color'] == enemy_col and (
+        _type = _piece.type
+        if _piece.color == enemy_col and (
                 _type == 'queen' or
                 _type == 'bishop' or
                 (dist == 1 and (
@@ -178,12 +180,12 @@ def _is_in_danger(position, board):
     # Down Left diag
     dist = 1
     while row + dist < 8 and col - dist >= 0 and \
-        board[row + dist][col - dist]['color'] == 'blank':
+        board[row + dist][col - dist].is_blank:
         dist += 1
     if row + dist < 8 and col - dist >= 0:
         _piece = board[row + dist][col - dist]
-        _type = _piece['type']
-        if _piece['color'] == enemy_col and (
+        _type = _piece.type
+        if _piece.color == enemy_col and (
                 _type == 'queen' or
                 _type == 'bishop' or
                 (dist == 1 and (
@@ -196,12 +198,12 @@ def _is_in_danger(position, board):
     # Up Left diag
     dist = 1
     while row - dist >= 0 and col - dist >= 0 and \
-        board[row - dist][col - dist]['color'] == 'blank':
+        board[row - dist][col - dist].is_blank:
         dist += 1
     if row - dist >= 0 and col - dist >= 0:
         _piece = board[row - dist][col - dist]
-        _type = _piece['type']
-        if _piece['color'] == enemy_col and (
+        _type = _piece.type
+        if _piece.color == enemy_col and (
                 _type == 'queen' or
                 _type == 'bishop' or
                 (dist == 1 and (
@@ -214,12 +216,12 @@ def _is_in_danger(position, board):
     # Up Right diag
     dist = 1
     while row - dist >= 0 and col + dist < 8 and \
-        board[row - dist][col + dist]['color'] == 'blank':
+        board[row - dist][col + dist].is_blank:
         dist += 1
     if row - dist >= 0 and col + dist < 8:
         _piece = board[row - dist][col + dist]
-        _type = _piece['type']
-        if _piece['color'] == enemy_col and (
+        _type = _piece.type
+        if _piece.color == enemy_col and (
                 _type == 'queen' or
                 _type == 'bishop' or
                 (dist == 1 and (
@@ -231,53 +233,53 @@ def _is_in_danger(position, board):
 
     # Up line
     dist = 1
-    while row - dist >= 0 and board[row - dist][col]['color'] == 'blank':
+    while row - dist >= 0 and board[row - dist][col].is_blank:
         dist += 1
     if row - dist >= 0:
         _piece = board[row - dist][col]
-        if _piece['color'] == enemy_col and (
-                _piece['type'] == 'queen' or
-                _piece['type'] == 'rook' or
-                (dist == 1 and _piece['type'] == 'king')
+        if _piece.color == enemy_col and (
+                _piece.type == 'queen' or
+                _piece.type == 'rook' or
+                (dist == 1 and _piece.type == 'king')
         ):
             return True
 
     # Right line
     dist = 1
-    while col + dist < 8 and board[row][col + dist]['color'] == 'blank':
+    while col + dist < 8 and board[row][col + dist].is_blank:
         dist += 1
     if col + dist < 8:
         _piece = board[row][col + dist]
-        if _piece['color'] == enemy_col and (
-                _piece['type'] == 'queen' or
-                _piece['type'] == 'rook' or
-                (dist == 1 and _piece['type'] == 'king')
+        if _piece.color == enemy_col and (
+                _piece.type == 'queen' or
+                _piece.type == 'rook' or
+                (dist == 1 and _piece.type == 'king')
         ):
             return True
 
     # Down line
     dist = 1
-    while row + dist < 8 and board[row + dist][col]['color'] == 'blank':
+    while row + dist < 8 and board[row + dist][col].is_blank:
         dist += 1
     if row + dist < 8:
         _piece = board[row + dist][col]
-        if _piece['color'] == enemy_col and (
-                _piece['type'] == 'queen' or
-                _piece['type'] == 'rook' or
-                (dist == 1 and _piece['type'] == 'king')
+        if _piece.color == enemy_col and (
+                _piece.type == 'queen' or
+                _piece.type == 'rook' or
+                (dist == 1 and _piece.type == 'king')
         ):
             return True
 
     # Left line
     dist = 1
-    while col - dist >= 0 and board[row][col - dist]['color'] == 'blank':
+    while col - dist >= 0 and board[row][col - dist].is_blank:
         dist += 1
     if col - dist >= 0:
         _piece = board[row][col - dist]
-        if _piece['color'] == enemy_col and (
-                _piece['type'] == 'queen' or
-                _piece['type'] == 'rook' or
-                (dist == 1 and _piece['type'] == 'king')
+        if _piece.color == enemy_col and (
+                _piece.type == 'queen' or
+                _piece.type == 'rook' or
+                (dist == 1 and _piece.type == 'king')
         ):
             return True
 
@@ -287,8 +289,8 @@ def _is_in_danger(position, board):
     for addr, addc in knight_moves:
         nr, nc = row + addr, col + addc
         if nr < 8 and nc < 8 and nr > -1 and nc > -1 and \
-            board[nr][nc]['color'] == enemy_col and \
-            board[nr][nc]['type'] == 'knight':
+            board[nr][nc].color == enemy_col and \
+            board[nr][nc].type == 'knight':
             return True
 
     return False
@@ -320,71 +322,71 @@ def fast_is_check2(color, board, departure, arrival, kpos):
     delta_row, delta_col = departure[0] - rkg, departure[1] - ckg
 
     # Alterate board!
-    org_color = board[departure[0]][departure[1]]['color']
-    board[departure[0]][departure[1]]['color'] = 'blank'
+    org_color = board[departure[0]][departure[1]].color
+    board[departure[0]][departure[1]].color = 'blank'
 
     if delta_row == 0:
         if delta_col > 0:
             # Right line
             dist = 1
-            while ckg + dist < 8 and board[rkg][ckg + dist]['color'] == 'blank':
+            while ckg + dist < 8 and board[rkg][ckg + dist].is_blank:
                 dist += 1
             if ckg + dist < 8:
                 _piece = board[rkg][ckg + dist]
-                if _piece['color'] == enemy_col and (
-                        _piece['type'] == 'queen' or
-                        _piece['type'] == 'rook'
+                if _piece.color == enemy_col and (
+                        _piece.type == 'queen' or
+                        _piece.type == 'rook'
                 ):
                     if not (arrival[0] - rkg == 0 and arrival[1] > ckg and
                             arrival[1] - ckg <= dist):
-                        board[departure[0]][departure[1]]['color'] = org_color
+                        board[departure[0]][departure[1]].color = org_color
                         return True
         else:
             # Left line
             dist = 1
-            while ckg - dist >= 0 and board[rkg][ckg - dist]['color'] == 'blank':
+            while ckg - dist >= 0 and board[rkg][ckg - dist].is_blank:
                 dist += 1
             if ckg - dist >= 0:
                 _piece = board[rkg][ckg - dist]
-                if _piece['color'] == enemy_col and (
-                        _piece['type'] == 'queen' or
-                        _piece['type'] == 'rook'
+                if _piece.color == enemy_col and (
+                        _piece.type == 'queen' or
+                        _piece.type == 'rook'
                 ):
                     if not (arrival[0] - rkg == 0 and arrival[1] < ckg and
                             ckg - arrival[1] <= dist):
-                        board[departure[0]][departure[1]]['color'] = org_color
+                        board[departure[0]][departure[1]].color = org_color
                         return True
 
     elif delta_col == 0:
         if delta_row > 0:
             # Down line
             dist = 1
-            while rkg + dist < 8 and board[rkg + dist][ckg]['color'] == 'blank':
+            while rkg + dist < 8 and board[rkg + dist][ckg].is_blank:
                 dist += 1
             if rkg + dist < 8:
                 _piece = board[rkg + dist][ckg]
-                if _piece['color'] == enemy_col and (
-                        _piece['type'] == 'queen' or
-                        _piece['type'] == 'rook'
+                if _piece.color == enemy_col and (
+                        _piece.type == 'queen' or
+                        _piece.type == 'rook'
                 ):
                     if not (arrival[1] - ckg == 0 and arrival[0] > rkg and
                             arrival[0] - rkg <= dist):
-                        board[departure[0]][departure[1]]['color'] = org_color
+                        board[departure[0]][departure[1]].color = org_color
                         return True
         else:
             # Up line
             dist = 1
-            while rkg - dist >= 0 and board[rkg - dist][ckg]['color'] == 'blank':
+            while rkg - dist >= 0 and board[rkg - dist][ckg].is_blank:
                 dist += 1
             if rkg - dist >= 0:
                 _piece = board[rkg - dist][ckg]
-                if _piece['color'] == enemy_col and (
-                        _piece['type'] == 'queen' or
-                        _piece['type'] == 'rook'
+                if _piece.color == enemy_col and (
+                        _piece.type == 'queen' or
+                        _piece.type == 'rook'
                 ):
                     if not (arrival[1] - ckg == 0 and arrival[0] < rkg and
                             rkg - arrival[0] <= dist):
-                        board[departure[0]][departure[1]]['color'] = org_color
+                        board[departure[0]][departure[1]].color = org_color
                         return True
 
     elif abs(delta_row) == abs(delta_col):
@@ -393,35 +395,35 @@ def fast_is_check2(color, board, departure, arrival, kpos):
                 # Down Right diag
                 dist = 1
                 while rkg + dist < 8 and ckg + dist < 8 and \
-                    board[rkg + dist][ckg + dist]['color'] == 'blank':
+                    board[rkg + dist][ckg + dist].is_blank:
                     dist += 1
                 if rkg + dist < 8 and ckg + dist < 8:
                     _piece = board[rkg + dist][ckg + dist]
-                    _type = _piece['type']
-                    if _piece['color'] == enemy_col and (
+                    _type = _piece.type
+                    if _piece.color == enemy_col and (
                             _type == 'queen' or
                             _type == 'bishop'
                     ):
                         if not (arrival[0] - rkg == arrival[1] - ckg and
                                 arrival[0] - rkg <= dist):
-                            board[departure[0]][departure[1]]['color'] = org_color
+                            board[departure[0]][departure[1]].color = org_color
                             return True
             else:
                 # Down Left diag
                 dist = 1
                 while rkg + dist < 8 and ckg - dist >= 0 and \
-                    board[rkg + dist][ckg - dist]['color'] == 'blank':
+                    board[rkg + dist][ckg - dist].is_blank:
                     dist += 1
                 if rkg + dist < 8 and ckg - dist >= 0:
                     _piece = board[rkg + dist][ckg - dist]
-                    _type = _piece['type']
-                    if _piece['color'] == enemy_col and (
+                    _type = _piece.type
+                    if _piece.color == enemy_col and (
                             _type == 'queen' or
                             _type == 'bishop'
                     ):
                         if not (arrival[0] - rkg == ckg - arrival[1] and
                                 arrival[0] - rkg <= dist):
-                            board[departure[0]][departure[1]]['color'] = org_color
+                            board[departure[0]][departure[1]].color = org_color
                             return True
 
         else:
@@ -429,38 +431,38 @@ def fast_is_check2(color, board, departure, arrival, kpos):
                 # Up Right diag
                 dist = 1
                 while rkg - dist >= 0 and ckg + dist < 8 and \
-                    board[rkg - dist][ckg + dist]['color'] == 'blank':
+                    board[rkg - dist][ckg + dist].is_blank:
                     dist += 1
                 if rkg - dist >= 0 and ckg + dist < 8:
                     _piece = board[rkg - dist][ckg + dist]
-                    _type = _piece['type']
-                    if _piece['color'] == enemy_col and (
+                    _type = _piece.type
+                    if _piece.color == enemy_col and (
                             _type == 'queen' or
                             _type == 'bishop'
                     ):
                         if not (rkg - arrival[0] == arrival[1] - ckg and
                                 rkg - arrival[0] <= dist):
-                            board[departure[0]][departure[1]]['color'] = org_color
+                            board[departure[0]][departure[1]].color = org_color
                             return True
             else:
                 # Up Left diag
                 dist = 1
                 while rkg - dist >= 0 and ckg - dist >= 0 and \
-                    board[rkg - dist][ckg - dist]['color'] == 'blank':
+                    board[rkg - dist][ckg - dist].is_blank:
                     dist += 1
                 if rkg - dist >= 0 and ckg - dist >= 0:
                     _piece = board[rkg - dist][ckg - dist]
-                    _type = _piece['type']
-                    if _piece['color'] == enemy_col and (
+                    _type = _piece.type
+                    if _piece.color == enemy_col and (
                             _type == 'queen' or
                             _type == 'bishop'
                     ):
                         if not (rkg - arrival[0] == ckg - arrival[1] and
                                 rkg - arrival[0] <= dist):
-                            board[departure[0]][departure[1]]['color'] = org_color
+                            board[departure[0]][departure[1]].color = org_color
                             return True
 
-    board[departure[0]][departure[1]]['color'] = org_color
+    board[departure[0]][departure[1]].color = org_color
     return False
 
 def is_enemy_check(enemy_color, board, departure, arrival,
@@ -486,8 +488,8 @@ def get_score(color, board):
     to_return = 0
     for row in board:
         for piece in row:
-            to_return += (2*int(piece['color'] == color) - 1) * \
-                values.get(piece.get('type'), 0)
+            to_return += (2*int(piece.color == color) - 1) * \
+                values.get(piece.type, 0)
     return to_return
 
 def readable_position(pos):
@@ -514,8 +516,8 @@ def missing_pieces(board):
     missing['white'] = deepcopy(missing['black'])
     for row in board:
         for elt in row:
-            if elt['color'] != 'blank':
-                missing[elt['color']][elt['type']] -= 1
+            if not elt.is_blank:
+                missing[elt.color][elt.type] -= 1
     to_return = {
         "black": [],
         "white": [],
@@ -540,12 +542,12 @@ def print_board(board):
             'queen': 'q',
             'king': 'g',
         }
-        if piece['color'] == 'blank':
+        if piece.is_blank:
             print('   ', end=' ')
-        elif piece['color'] == 'black':
-            print(' B' + initials[piece['type']], end=' ')
+        elif piece.color == 'black':
+            print(' B' + initials[piece.type], end=' ')
         else:
-            print(' W' + initials[piece['type']], end=' ')
+            print(' W' + initials[piece.type], end=' ')
 
     line = '\n' + '-' * (8 * 4 + 9)
     for row in board:

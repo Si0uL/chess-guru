@@ -39,14 +39,14 @@
                                         {% else %}
                                             <td>
                                         {% endif %}
-                                            {% if board[r][c]['color'] == turn %}
+                                            {% if board[r][c].color == turn %}
                                                 <a href="/moves/{{r}}/{{c}}">
                                             {% elif (r, c) in highlight %}
                                                 <a href="/play/{{selected[0][0]}}/{{selected[0][1]}}/{{r}}/{{c}}">
                                             {% else %}
                                                 <a href="javascript:void(0);">
                                             {% endif %}
-                                                <img src="static/img/{{ board[r][c]['color'] }}-{{ board[r][c]['type'] }}.png">
+                                                <img src="static/img/{{ board[r][c].color }}-{{ board[r][c].type }}.png">
                                             </a>
                                         </td>
                                     {% endfor %}
