@@ -54,7 +54,7 @@ void load_game(chess_game *p_game, char *path) {
       error(1, 0, "Cannot read file %s!\n", path);
   }
 
-  int line_nb = 1;
+  int board_idx = 0;
   int fscanf_result = 0;
 
   fscanf_result = fscanf(p_file, "w_turn = %d", &p_game->w_turn);
@@ -62,11 +62,11 @@ void load_game(chess_game *p_game, char *path) {
   while (fscanf_result != EOF) {
       if (fscanf_result != 1) {
           error(1, 0, "Line number %d is not syntactically correct!\n",
-                line_nb);
+                board_idx + 1);
       }
 
-      line_nb += 1;
-      fscanf_result = fscanf(p_file, "%d", (p_game->board + line_nb - 2));
+      fscanf_result = fscanf(p_file, "%d", (p_game->board + board_idx));
+      board_idx += 1;
   }
 
   fclose(p_file);

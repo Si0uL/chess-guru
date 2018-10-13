@@ -1,3 +1,5 @@
 /__pycache__
 *.p
 /gif_minmax_ab
+/cProfiles
+*.out
