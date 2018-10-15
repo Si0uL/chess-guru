@@ -236,3 +236,136 @@ void unplay(chess_game *p_game, int *unplay_infos) {
     }
   }
 };
+
+
+/*
+ * Check if the player up is check or not by scanning all lines + diags starting
+ * from the king
+ */
+int is_check(chess_game *p_game) {
+  // +1 if white, -1 if black
+  int kpos, sign = 2 * p_game->w_turn - 1;
+  if (p_game->w_turn) {
+    kpos = p_game->w_king_pos;
+  } else {
+    kpos = p_game->b_king_pos;
+  }
+
+  // Scanning all lines & diags
+  int scope_pos;
+  // Up
+  scope_pos = kpos + 8;
+  while (scope_pos < 64 && *(p_game->board + scope_pos) == 0) {
+    scope_pos += 8;
+  }
+  if (scope_pos < 64 && (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 2 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Down
+  scope_pos = kpos - 8;
+  while (scope_pos >= 0 && *(p_game->board + scope_pos) == 0) {
+    scope_pos -= 8;
+  }
+  if (scope_pos >= 0 && (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 2 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Right
+  scope_pos = kpos + 1;
+  while (scope_pos %8 != 0 && *(p_game->board + scope_pos) == 0) {
+    scope_pos += 1;
+  }
+  if (scope_pos %8 != 0 && (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 2 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Left
+  scope_pos = kpos - 1;
+  while (scope_pos %8 != 7 && *(p_game->board + scope_pos) == 0) {
+    scope_pos -= 1;
+  }
+  if (scope_pos %8 != 7 && (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 2 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+
+  // Up-Right
+  scope_pos = kpos + 9;
+  while (scope_pos < 64 && scope_pos %8 != 0 &&
+    *(p_game->board + scope_pos) == 0) {
+    scope_pos += 9;
+  }
+  if (scope_pos < 64 && scope_pos %8 != 0 &&
+    (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 4 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Down-Right
+  scope_pos = kpos - 7;
+  while (scope_pos >= 0 && scope_pos %8 != 0 &&
+    *(p_game->board + scope_pos) == 0) {
+    scope_pos -= 7;
+  }
+  if (scope_pos >= 0 && scope_pos %8 != 0 &&
+    (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 4 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Up-Left
+  scope_pos = kpos + 7;
+  while (scope_pos < 64 && scope_pos %8 != 7 &&
+    *(p_game->board + scope_pos) == 0) {
+    scope_pos += 7;
+  }
+  if (scope_pos < 64 && scope_pos %8 != 7 &&
+    (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 4 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+  // Down-Left
+  scope_pos = kpos - 9;
+  while (scope_pos >= 0 && scope_pos %8 != 7 &&
+    *(p_game->board + scope_pos) == 0) {
+    scope_pos -= 9;
+  }
+  if (scope_pos >= 0 && scope_pos %8 != 7 &&
+    (*(p_game->board + scope_pos)) * sign < 0) {
+    if (
+      abs((*(p_game->board + scope_pos))) == 4 ||
+      abs((*(p_game->board + scope_pos))) == 5
+    ) {
+      return 1;
+    }
+  }
+
+  return 0;
+};

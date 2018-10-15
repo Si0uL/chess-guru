@@ -22,6 +22,8 @@ int main(int argc, char const *argv[]) {
   printf("\nWhite Turn = %d\n", p_game->w_turn);
   print_board(p_game);
 
+  printf("\nIs check = %d\n", is_check(p_game));
+
   deallocate_game(p_game);
 
   return 0;
