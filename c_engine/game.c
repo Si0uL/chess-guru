@@ -33,15 +33,15 @@ chess_game *nil() {
   for (size_t r = 0; r < 8; r++) {
     for (size_t c = 0; c < 8; c++) {
       if (r == 0) { // white 1st line
-        *(p_g->board + 8*r + c) = FIRST_ROW[c];
+        p_g->board[8*r + c] = FIRST_ROW[c];
       } else if (r == 7) { // black 1st line
-        *(p_g->board + 8*r + c) = -FIRST_ROW[c];
+        p_g->board[8*r + c] = -FIRST_ROW[c];
       } else if (r == 1) { // white 2nd line
-        *(p_g->board + 8*r + c) = 1;
+        p_g->board[8*r + c] = 1;
       } else if (r == 6) { // black 2nd line
-        *(p_g->board + 8*r + c) = -1;
+        p_g->board[8*r + c] = -1;
       } else { // rest
-        *(p_g->board + 8*r + c) = 0;
+        p_g->board[8*r + c] = 0;
       }
     }
   }
@@ -58,7 +58,7 @@ void print_board(chess_game *p_game) {
   for (int r = 7; r > -1; r--) {
     printf("|");
     for (size_t c = 0; c < 8; c++) {
-      printf(" %c ", labels[abs(*(p_game->board + 8*r + c))]);
+      printf(" %c ", labels[abs(p_game->board[8*r + c])]);
     }
     printf("|\n");
   }
@@ -125,8 +125,8 @@ void load_game(chess_game *p_game, char *path) {
  */
 void play(chess_game *p_game, int from, int to, int *unplay_infos) {
 
-  int former_start = *(p_game->board + from);
-  int former_arrival = *(p_game->board + to);
+  int former_start = p_game->board[from];
+  int former_arrival = p_game->board[to];
 
   // Save unplay_infos
   *(unplay_infos + 0) = from;
@@ -142,13 +142,13 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
   }
 
   // Move to arrival
-  *(p_game->board + to) = former_start;
+  p_game->board[to] = former_start;
   // Remove from former position
-  *(p_game->board + from) = 0;
+  p_game->board[from] = 0;
 
   // If pawn at edge
   if (abs(former_start) == 1 && (to >= 56 || to <= 7)) {
-    *(p_game->board + to) = former_start * 5; // transfrom it to queen
+    p_game->board[to] = former_start * 5; // transfrom it to queen
   }
 
   // If king
@@ -166,17 +166,17 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
     // If you rook, move the rook too
     if (abs(from - to) == 2) {
       if (to == 2) {
-        *(p_game->board + 3) = 2;
-        *(p_game->board + 0) = 0;
+        p_game->board[3] = 2;
+        p_game->board[0] = 0;
       } else if (to == 6) {
-        *(p_game->board + 5) = 2;
-        *(p_game->board + 7) = 0;
+        p_game->board[5] = 2;
+        p_game->board[7] = 0;
       } else if (to == 58) {
-        *(p_game->board + 59) = -2;
-        *(p_game->board + 56) = 0;
+        p_game->board[59] = -2;
+        p_game->board[56] = 0;
       } else { // to == 62
-        *(p_game->board + 61) = -2;
-        *(p_game->board + 63) = 0;
+        p_game->board[61] = -2;
+        p_game->board[63] = 0;
       }
     }
   }
@@ -193,23 +193,23 @@ void unplay(chess_game *p_game, int *unplay_infos) {
   p_game->w_turn = (p_game->w_turn + 1) % 2;
 
   // Replace former pieces at their original places
-  *(p_game->board + *(unplay_infos + 0)) = *(unplay_infos + 2);
-  *(p_game->board + *(unplay_infos + 1)) = *(unplay_infos + 3);
+  p_game->board[unplay_infos[0]] = unplay_infos[2];
+  p_game->board[unplay_infos[1]] = unplay_infos[3];
 
   // Restore previous castling permissions
   if (p_game->w_turn) {
-    p_game->castling_wl = *(unplay_infos + 4);
-    p_game->castling_wr = *(unplay_infos + 5);
+    p_game->castling_wl = unplay_infos[4];
+    p_game->castling_wr = unplay_infos[5];
   } else {
-    p_game->castling_bl = *(unplay_infos + 4);
-    p_game->castling_br = *(unplay_infos + 5);
+    p_game->castling_bl = unplay_infos[4];
+    p_game->castling_br = unplay_infos[5];
   }
 
   // If king unmoved
-  if (abs(*(unplay_infos + 2)) == 6) {
+  if (abs(unplay_infos[2]) == 6) {
 
-    int from = *(unplay_infos + 0);
-    int to = *(unplay_infos + 1);
+    int from = unplay_infos[0];
+    int to = unplay_infos[1];
 
     // Update king position
     if (p_game->w_turn) {
@@ -221,17 +221,17 @@ void unplay(chess_game *p_game, int *unplay_infos) {
     // Unrook if needed
     if (abs(from - to) == 2) {
       if (to == 2) {
-        *(p_game->board + 0) = 2;
-        *(p_game->board + 3) = 0;
+        p_game->board[0] = 2;
+        p_game->board[3] = 0;
       } else if (to == 6) {
-        *(p_game->board + 7) = 2;
-        *(p_game->board + 5) = 0;
+        p_game->board[7] = 2;
+        p_game->board[5] = 0;
       } else if (to == 58) {
-        *(p_game->board + 56) = -2;
-        *(p_game->board + 59) = 0;
+        p_game->board[56] = -2;
+        p_game->board[59] = 0;
       } else { // to == 62
-        *(p_game->board + 63) = -2;
-        *(p_game->board + 61) = 0;
+        p_game->board[63] = -2;
+        p_game->board[61] = 0;
       }
     }
   }
@@ -255,52 +255,52 @@ int is_check(chess_game *p_game) {
   int scope_pos;
   // Up
   scope_pos = kpos + 8;
-  while (scope_pos < 64 && *(p_game->board + scope_pos) == 0) {
+  while (scope_pos < 64 && p_game->board[scope_pos] == 0) {
     scope_pos += 8;
   }
-  if (scope_pos < 64 && (*(p_game->board + scope_pos)) * sign < 0) {
+  if (scope_pos < 64 && p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 2 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 2 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
   }
   // Down
   scope_pos = kpos - 8;
-  while (scope_pos >= 0 && *(p_game->board + scope_pos) == 0) {
+  while (scope_pos >= 0 && p_game->board[scope_pos] == 0) {
     scope_pos -= 8;
   }
-  if (scope_pos >= 0 && (*(p_game->board + scope_pos)) * sign < 0) {
+  if (scope_pos >= 0 && p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 2 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 2 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
   }
   // Right
   scope_pos = kpos + 1;
-  while (scope_pos %8 != 0 && *(p_game->board + scope_pos) == 0) {
+  while (scope_pos %8 != 0 && p_game->board[scope_pos] == 0) {
     scope_pos += 1;
   }
-  if (scope_pos %8 != 0 && (*(p_game->board + scope_pos)) * sign < 0) {
+  if (scope_pos %8 != 0 && p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 2 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 2 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
   }
   // Left
   scope_pos = kpos - 1;
-  while (scope_pos %8 != 7 && *(p_game->board + scope_pos) == 0) {
+  while (scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
     scope_pos -= 1;
   }
-  if (scope_pos %8 != 7 && (*(p_game->board + scope_pos)) * sign < 0) {
+  if (scope_pos %8 != 7 && p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 2 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 2 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
@@ -309,14 +309,14 @@ int is_check(chess_game *p_game) {
   // Up-Right
   scope_pos = kpos + 9;
   while (scope_pos < 64 && scope_pos %8 != 0 &&
-    *(p_game->board + scope_pos) == 0) {
+    p_game->board[scope_pos] == 0) {
     scope_pos += 9;
   }
   if (scope_pos < 64 && scope_pos %8 != 0 &&
-    (*(p_game->board + scope_pos)) * sign < 0) {
+    p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 4 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 4 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
@@ -324,14 +324,14 @@ int is_check(chess_game *p_game) {
   // Down-Right
   scope_pos = kpos - 7;
   while (scope_pos >= 0 && scope_pos %8 != 0 &&
-    *(p_game->board + scope_pos) == 0) {
+    p_game->board[scope_pos] == 0) {
     scope_pos -= 7;
   }
   if (scope_pos >= 0 && scope_pos %8 != 0 &&
-    (*(p_game->board + scope_pos)) * sign < 0) {
+    p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 4 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 4 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
@@ -339,14 +339,14 @@ int is_check(chess_game *p_game) {
   // Up-Left
   scope_pos = kpos + 7;
   while (scope_pos < 64 && scope_pos %8 != 7 &&
-    *(p_game->board + scope_pos) == 0) {
+    p_game->board[scope_pos] == 0) {
     scope_pos += 7;
   }
   if (scope_pos < 64 && scope_pos %8 != 7 &&
-    (*(p_game->board + scope_pos)) * sign < 0) {
+    p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 4 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 4 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
@@ -354,14 +354,14 @@ int is_check(chess_game *p_game) {
   // Down-Left
   scope_pos = kpos - 9;
   while (scope_pos >= 0 && scope_pos %8 != 7 &&
-    *(p_game->board + scope_pos) == 0) {
+    p_game->board[scope_pos] == 0) {
     scope_pos -= 9;
   }
   if (scope_pos >= 0 && scope_pos %8 != 7 &&
-    (*(p_game->board + scope_pos)) * sign < 0) {
+    p_game->board[scope_pos] * sign < 0) {
     if (
-      abs((*(p_game->board + scope_pos))) == 4 ||
-      abs((*(p_game->board + scope_pos))) == 5
+      abs(p_game->board[scope_pos]) == 4 ||
+      abs(p_game->board[scope_pos]) == 5
     ) {
       return 1;
     }
