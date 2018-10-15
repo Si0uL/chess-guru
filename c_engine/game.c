@@ -73,15 +73,40 @@ void load_game(chess_game *p_game, char *path) {
       error(1, 0, "Cannot read file %s!\n", path);
   }
 
-  int board_idx = 0;
-  int fscanf_result = 0;
+  // Read game parameters
+  if (fscanf(p_file, "w_turn = %d\n", &p_game->w_turn) != 1) {
+    printf("%s\n", "Error reading w_turn");
+  };
+  if (fscanf(p_file, "w_score = %d\n", &p_game->w_score) != 1) {
+    printf("%s\n", "Error reading w_score");
+  };
+  if (fscanf(p_file, "w_king_pos = %d\n", &p_game->w_king_pos) != 1) {
+    printf("%s\n", "Error reading w_king_pos");
+  };
+  if (fscanf(p_file, "b_king_pos = %d\n", &p_game->b_king_pos) != 1) {
+    printf("%s\n", "Error reading b_king_pos");
+  };
+  if (fscanf(p_file, "castling_wl = %d\n", &p_game->castling_wl) != 1) {
+    printf("%s\n", "Error reading castling_wl");
+  };
+  if (fscanf(p_file, "castling_wr = %d\n", &p_game->castling_wr) != 1) {
+    printf("%s\n", "Error reading castling_wr");
+  };
+  if (fscanf(p_file, "castling_bl = %d\n", &p_game->castling_bl) != 1) {
+    printf("%s\n", "Error reading castling_bl");
+  };
+  if (fscanf(p_file, "castling_br = %d\n", &p_game->castling_br) != 1) {
+    printf("%s\n", "Error reading castling_br");
+  };
 
-  fscanf_result = fscanf(p_file, "w_turn = %d", &p_game->w_turn);
+  // Read board
+  int board_idx = 0;
+  int fscanf_result = 1;
 
   while (fscanf_result != EOF) {
       if (fscanf_result != 1) {
           error(1, 0, "Line number %d is not syntactically correct!\n",
-                board_idx + 1);
+                board_idx + 9);
       }
 
       fscanf_result = fscanf(p_file, "%d", (p_game->board + board_idx));

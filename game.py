@@ -250,6 +250,24 @@ class ChessGame(object):
             "king": 6,
         }
         to_dump = "w_turn = {}\n".format(int(self.white_turn))
+        to_dump += "w_score = {}\n".format(self.score())
+        to_dump += "w_king_pos = {}\n".format(
+            8 * (7 - self.king_position['white'][0]) +
+            self.king_position['white'][1]
+        )
+        to_dump += "b_king_pos = {}\n".format(
+            8 * (7 - self.king_position['black'][0]) +
+            self.king_position['black'][1]
+        )
+        to_dump += "castling_wl = {}\n".format(
+            int(self.castling['white']['left']))
+        to_dump += "castling_wr = {}\n".format(
+            int(self.castling['white']['right']))
+        to_dump += "castling_bl = {}\n".format(
+            int(self.castling['black']['left']))
+        to_dump += "castling_br = {}\n".format(
+            int(self.castling['black']['right']))
+
         for row in range(7, -1, -1):
             for col in range(8):
                 if self.board[row][col]["color"] == "blank":
