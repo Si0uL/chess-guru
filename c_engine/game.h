@@ -35,3 +35,6 @@ void unplay(chess_game *p_game, int *unplay_infos);
 
 
 int is_check(chess_game *p_game);
+
+
+int available_movements_raw(chess_game *p_game, int position, int *movements);

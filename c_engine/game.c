@@ -369,3 +369,217 @@ int is_check(chess_game *p_game) {
 
   return 0;
 };
+
+
+/*
+ * Puts all available movements (raw so wihout removing plays leading to a
+ * check position) inside movements (moments should be allocated before).
+ * Returns the number of movements found.
+ */
+int available_movements_raw(chess_game *p_game, int position, int *movements) {
+  int found = 0;
+  // +/- 1 according to the piece's color
+  int sign = 2 * (p_game->board[position] > 0) - 1;
+  int type = abs(p_game->board[position]);
+  int scope_pos;
+
+  void add_mvt(int loc) {
+    movements[found] = loc;
+    found ++;
+  }
+
+  // rook or queen
+  if (type == 2 || type == 5) {
+    // Up
+    scope_pos = position + 8;
+    // find empty locations
+    while (scope_pos < 64 && p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos += 8;
+    }
+    // eat a potential enemy piece
+    if (scope_pos < 64 && p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Down
+    scope_pos = position - 8;
+    while (scope_pos >= 0 && p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos -= 8;
+    }
+    if (scope_pos >= 0 && p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Right
+    scope_pos = position + 1;
+    while (scope_pos %8 != 0 && p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos += 1;
+    }
+    if (scope_pos %8 != 0 && p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Left
+    scope_pos = position - 1;
+    while (scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos -= 1;
+    }
+    if (scope_pos %8 != 7 && p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+  }
+
+  // bishop or queen
+  if (type == 4 || type == 5) {
+    // Up-Right
+    scope_pos = position + 9;
+    while (scope_pos < 64 && scope_pos % 8 != 0 &&
+      p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos += 9;
+    }
+    if (scope_pos < 64 && scope_pos % 8 != 0 &&
+      p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Down-Right
+    scope_pos = position - 7;
+    while (scope_pos >= 0 && scope_pos % 8 != 0 &&
+      p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos -= 7;
+    }
+    if (scope_pos >= 0 && scope_pos % 8 != 0 &&
+      p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Up-Left
+    scope_pos = position + 7;
+    while (scope_pos < 64 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos += 7;
+    }
+    if (scope_pos < 64 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+    // Down-Left
+    scope_pos = position - 9;
+    while (scope_pos >= 0 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] == 0) {
+      add_mvt(scope_pos);
+      scope_pos -= 9;
+    }
+    if (scope_pos >= 0 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] * sign < 0) {
+      add_mvt(scope_pos);
+    }
+  }
+
+  // pawn
+  if (type == 1) {
+    // 1 in front
+    if (p_game->board[position + sign * 8] == 0) {
+      add_mvt(position + sign * 8);
+      // on first line and nobody 2 rows after
+      if (sign > 0 && position > 7 && position < 16 &&
+        p_game->board[position + 16] == 0) {
+        add_mvt(position + 16);
+      } else if (sign < 0 && position > 55 && position < 64 &&
+        p_game->board[position - 16] == 0) {
+        add_mvt(position - 16);
+      }
+    }
+    // Kill on the left
+    if (position%8 != 0 && p_game->board[position - 1 + 8 * sign] * sign < 0) {
+      add_mvt(position - 1 + 8 * sign); // position +7/-9
+    }
+    // Kill on the right
+    if (position%8 != 7 && p_game->board[position + 1 + 8 * sign] * sign < 0) {
+      add_mvt(position + 1 + 8 * sign); // position +9/-7
+    }
+  }
+
+  // knight
+  if (type == 3) {
+    if (position % 8 != 7) {
+      if (position + 17 < 64 && p_game->board[position + 17] * sign <= 0) {
+        add_mvt(position + 17);
+      }
+      if (position - 15 >= 0 && p_game->board[position - 15] * sign <= 0) {
+        add_mvt(position - 15);
+      }
+
+      if (position % 8 != 6) {
+        if (position + 10 < 64 && p_game->board[position + 10] * sign <= 0) {
+          add_mvt(position + 10);
+        }
+        if (position - 6 >= 0 && p_game->board[position - 6] * sign <= 0) {
+          add_mvt(position - 6);
+        }
+      }
+    }
+
+    if (position % 8 != 0) {
+      if (position + 15 < 64 && p_game->board[position + 15] * sign <= 0) {
+        add_mvt(position + 15);
+      }
+      if (position - 17 >= 0 && p_game->board[position - 17] * sign <= 0) {
+        add_mvt(position - 17);
+      }
+
+      if (position % 8 != 1) {
+        if (position + 6 < 64 && p_game->board[position + 6] * sign <= 0) {
+          add_mvt(position + 6);
+        }
+        if (position - 10 >= 0 && p_game->board[position - 10] * sign <= 0) {
+          add_mvt(position - 10);
+        }
+      }
+    }
+  }
+
+  // king
+  if (type == 6) {
+    // Up
+    if (position + 8 < 64 && p_game->board[position + 8] * sign <= 0) {
+      add_mvt(position + 8);
+    }
+    // Down
+    if (position - 8 >= 0 && p_game->board[position - 8] * sign <= 0) {
+      add_mvt(position - 8);
+    }
+    // Right
+    if ((position + 1) % 8 != 0 && p_game->board[position + 1] * sign <= 0) {
+      add_mvt(position + 1);
+    }
+    // Left
+    if ((position - 1) % 8 != 7 && p_game->board[position - 1] * sign <= 0) {
+      add_mvt(position - 1);
+    }
+    // Up-Right
+    if (position + 9 < 64 && (position + 9) % 8 != 0 &&
+      p_game->board[position + 9] * sign <= 0) {
+      add_mvt(position + 9);
+    }
+    // Down-Right
+    if (position - 7 >= 0 && (position - 7) % 8 != 0 &&
+      p_game->board[position - 7] * sign <= 0) {
+      add_mvt(position - 7);
+    }
+    // Up-Left
+    if (position + 7 < 64 && (position + 7) % 8 != 7 &&
+      p_game->board[position + 7] * sign <= 0) {
+      add_mvt(position + 7);
+    }
+    // Down-Left
+    if (position - 9 > 0 && (position - 9) % 8 != 7 &&
+      p_game->board[position - 9] * sign <= 0) {
+      add_mvt(position - 9);
+    }
+  }
+
+  return found;
+};
