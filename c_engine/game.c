@@ -261,7 +261,8 @@ int is_check(chess_game *p_game) {
   if (scope_pos < 64 && p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 2 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6
     ) {
       return 1;
     }
@@ -274,7 +275,8 @@ int is_check(chess_game *p_game) {
   if (scope_pos >= 0 && p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 2 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6
     ) {
       return 1;
     }
@@ -287,7 +289,8 @@ int is_check(chess_game *p_game) {
   if (scope_pos %8 != 0 && p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 2 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6
     ) {
       return 1;
     }
@@ -300,7 +303,8 @@ int is_check(chess_game *p_game) {
   if (scope_pos %8 != 7 && p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 2 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6
     ) {
       return 1;
     }
@@ -316,7 +320,9 @@ int is_check(chess_game *p_game) {
     p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 4 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6 ||
+      (p_game->board[scope_pos]) == -1 && sign == 1 && scope_pos - kpos == 9)
     ) {
       return 1;
     }
@@ -331,7 +337,9 @@ int is_check(chess_game *p_game) {
     p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 4 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6 ||
+      (p_game->board[scope_pos]) == 1 && sign == -1 && scope_pos - kpos == -7)
     ) {
       return 1;
     }
@@ -346,7 +354,9 @@ int is_check(chess_game *p_game) {
     p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 4 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6 ||
+      (p_game->board[scope_pos]) == -1 && sign == 1 && scope_pos - kpos == 7)
     ) {
       return 1;
     }
@@ -361,9 +371,48 @@ int is_check(chess_game *p_game) {
     p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 4 ||
-      abs(p_game->board[scope_pos]) == 5
+      abs(p_game->board[scope_pos]) == 5 ||
+      abs(p_game->board[scope_pos]) == 6 ||
+      (p_game->board[scope_pos]) == 1 && sign == -1 && scope_pos - kpos == -9)
     ) {
       return 1;
+    }
+  }
+
+  // Add knight watch
+  if (kpos % 8 != 7) {
+    if (kpos + 17 < 64 && p_game->board[kpos + 17] * sign == -3) {
+      return 1;
+    }
+    if (kpos - 15 >= 0 && p_game->board[kpos - 15] * sign == -3) {
+      return 1;
+    }
+
+    if (kpos % 8 != 6) {
+      if (kpos + 10 < 64 && p_game->board[kpos + 10] * sign == -3) {
+        return 1;
+      }
+      if (kpos - 6 >= 0 && p_game->board[kpos - 6] * sign == -3) {
+        return 1;
+      }
+    }
+  }
+
+  if (kpos % 8 != 0) {
+    if (kpos + 15 < 64 && p_game->board[kpos + 15] * sign == -3) {
+      return 1;
+    }
+    if (kpos - 17 >= 0 && p_game->board[kpos - 17] * sign == -3) {
+      return 1;
+    }
+
+    if (kpos % 8 != 1) {
+      if (kpos + 6 < 64 && p_game->board[kpos + 6] * sign == -3) {
+        return 1;
+      }
+      if (kpos - 10 >= 0 && p_game->board[kpos - 10] * sign == -3) {
+        return 1;
+      }
     }
   }
 
