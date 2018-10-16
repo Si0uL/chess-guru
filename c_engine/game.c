@@ -674,3 +674,49 @@ int available_movements_raw(chess_game *p_game, int position, int *movements) {
 
   return found;
 };
+
+
+/*
+ * Will the player be check after moving this ?
+ * You must not be checked or move your king before calling this.
+ * Only line / diag shared by king and moved piece is re-evaluated
+ */
+int will_be_check(chess_game *p_game, int start, int arrival) {
+  int sign = 2 * (p_game->board[start] > 0) - 1;
+  int kpos;
+  if (sign > 0) {
+    kpos = p_game->w_king_pos;
+  } else {
+    kpos = p_game->b_king_pos;
+  }
+
+  int delta_row = (start - kpos) / 8;
+  int delta_col = (start - kpos) % 8;
+  int to_return = 0;
+
+  // "Play" the move
+  int cache = p_game->board[arrival];
+  p_game->board[arrival] = p_game->board[start];
+  p_game->board[start] = 0;
+  // Re-check only the concerned line / diag
+  if (delta_row == 0) {
+    if (start > kpos) to_return = _scan_r(p_game, kpos, sign);
+    else to_return = _scan_l(p_game, kpos, sign);
+
+  } else if (delta_col == 0) {
+    if (start > kpos) to_return = _scan_u(p_game, kpos, sign);
+    else to_return = _scan_d(p_game, kpos, sign);
+
+  } else if (delta_col == delta_row) {
+    if (start > kpos) to_return = _scan_ur(p_game, kpos, sign);
+    else to_return = _scan_dl(p_game, kpos, sign);
+
+  } else if (delta_col == -delta_row) {
+    if (start > kpos) to_return = _scan_ul(p_game, kpos, sign);
+    else to_return = _scan_dr(p_game, kpos, sign);
+
+  }
+  p_game->board[start] = p_game->board[arrival];
+  p_game->board[arrival] = cache;
+  return to_return;
+};

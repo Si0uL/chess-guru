@@ -38,3 +38,6 @@ int is_check(chess_game *p_game);
 
 
 int available_movements_raw(chess_game *p_game, int position, int *movements);
+
+
+int will_be_check(chess_game *p_game, int start, int arrival);
