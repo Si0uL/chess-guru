@@ -723,7 +723,107 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
       add_mvt(position - 9);
     }
 
-    // TODO Add castling
+    // -------------------------------------------------------------------------
+    // Only castling cases below !
+    // -------------------------------------------------------------------------
+    // Add potential castling moves, play() will deduce and move the rook too
+    // White case
+    if (!am_i_check && w_turn) {
+      // If castling left is available and nobody is on the way (position == 4)
+      if (p_game->castling_wl && p_game->board[1] == 0 && p_game->board[2] == 0
+        && p_game->board[3] == 0) {
+        // Has to be 2 to validate the castling (no check on the way nor at the
+        // arrival)
+        int checked = 0;
+        // Am i check on the way ?
+        play(p_game, position, 3, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        // Am i check at the arrival ?
+        play(p_game, position, 2, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        if (checked == 2) {
+          movements[found] = 2;
+          found ++;
+        }
+      }
+      // If castling right is available and nobody is on the way (position == 4)
+      if (p_game->castling_wl && p_game->board[5] == 0 &&
+        p_game->board[6] == 0) {
+        // Has to be 2 to validate the castling (no check on the way nor at the
+        // arrival)
+        int checked = 0;
+        // Am i check on the way ?
+        play(p_game, position, 5, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        // Am i check at the arrival ?
+        play(p_game, position, 6, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        if (checked == 2) {
+          movements[found] = 6;
+          found ++;
+        }
+      }
+    // Black case
+    } else if (!am_i_check && !w_turn) {
+      // If castling left is available and nobody is on the way (position == 60)
+      if (p_game->castling_wl && p_game->board[59] == 0 &&
+        p_game->board[58] == 0 && p_game->board[57] == 0) {
+        // Has to be 2 to validate the castling (no check on the way nor at the
+        // arrival)
+        int checked = 0;
+        // Am i check on the way ?
+        play(p_game, position, 59, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        // Am i check at the arrival ?
+        play(p_game, position, 58, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        if (checked == 2) {
+          movements[found] = 58;
+          found ++;
+        }
+      }
+      // If castling right is available and nobody is on the way (position ==60)
+      if (p_game->castling_wl && p_game->board[61] == 0 &&
+        p_game->board[62] == 0) {
+        // Has to be 2 to validate the castling (no check on the way nor at the
+        // arrival)
+        int checked = 0;
+        // Am i check on the way ?
+        play(p_game, position, 61, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        // Am i check at the arrival ?
+        play(p_game, position, 62, six_long_int_cache);
+        if (!is_check(p_game, w_turn)) {
+          checked ++;
+        }
+        unplay(p_game, six_long_int_cache);
+        if (checked == 2) {
+          movements[found] = 62;
+          found ++;
+        }
+      }
+    }
   }
 
   return found;
