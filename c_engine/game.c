@@ -495,7 +495,7 @@ int is_check(chess_game *p_game, int white_turn) {
 
 
 /*
- * Puts all available movements inside movements (moments should be allocated
+ * Puts all available movements inside from & to_ (they should be allocated
  * before). Adds castling postitions and checks if move doesn't affect
  * checkstate. If not am_i_check, uses will_be_check() to save time on
  * moves checking.
@@ -504,7 +504,7 @@ int is_check(chess_game *p_game, int white_turn) {
  * Returns the number of available movements found.
  */
 int available_movements(chess_game *p_game, int position, int am_i_check,
-  int *movements, int *six_long_int_cache) {
+  int *from, int *to_, int *six_long_int_cache) {
 
   int found = 0;
   // +/- 1 according to the piece's color
@@ -518,13 +518,15 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
     // If you do not move the king and are not check, use will_be_check()
     if (type != 6 && am_i_check == 0) {
       if (!will_be_check(p_game, position, arrival)) {
-        movements[found] = arrival;
+        from[found] = position;
+        to_[found] = arrival;
         found ++;
       }
     } else {
       play(p_game, position, arrival, six_long_int_cache);
       if (!is_check(p_game, w_turn)) {
-        movements[found] = arrival;
+        from[found] = position;
+        to_[found] = arrival;
         found ++;
       }
       unplay(p_game, six_long_int_cache);
@@ -748,7 +750,8 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         }
         unplay(p_game, six_long_int_cache);
         if (checked == 2) {
-          movements[found] = 2;
+          from[found] = position;
+          to_[found] = 2;
           found ++;
         }
       }
@@ -771,7 +774,8 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         }
         unplay(p_game, six_long_int_cache);
         if (checked == 2) {
-          movements[found] = 6;
+          from[found] = position;
+          to_[found] = 6;
           found ++;
         }
       }
@@ -796,7 +800,8 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         }
         unplay(p_game, six_long_int_cache);
         if (checked == 2) {
-          movements[found] = 58;
+          from[found] = position;
+          to_[found] = 58;
           found ++;
         }
       }
@@ -819,13 +824,29 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         }
         unplay(p_game, six_long_int_cache);
         if (checked == 2) {
-          movements[found] = 62;
+          from[found] = position;
+          to_[found] = 62;
           found ++;
         }
       }
     }
   }
 
+  return found;
+};
+
+
+int all_available_movements(chess_game *p_game, int w_turn, int am_i_check,
+  int *from, int *to_, int *six_long_int_cache) {
+
+  int found = 0;
+  int sign = 2 * (w_turn > 0) - 1;
+  for (int pos = 0; pos < 64; pos++) {
+    if (p_game->board[pos] * sign > 0) {
+      found += available_movements(p_game, pos, am_i_check, from + found,
+        to_ + found, six_long_int_cache);
+    }
+  }
   return found;
 };
 
