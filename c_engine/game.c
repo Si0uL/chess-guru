@@ -238,6 +238,17 @@ void unplay(chess_game *p_game, int *unplay_infos) {
 };
 
 
+/*
+ * -----------------------------------------------------------------------------
+ * All the following functions are meant to scan a row / diagonal to check if
+ * the first encountered piece is a threat or not for the location argument
+ * Either returns 1 or 0
+ * -----------------------------------------------------------------------------
+ */
+
+/*
+ * Up row scanner (see over)
+ */
 int _scan_u(chess_game *p_game, int location, int sign) {
   int scope_pos = location + 8;
   while (scope_pos < 64 && p_game->board[scope_pos] == 0) {
@@ -256,6 +267,9 @@ int _scan_u(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Down row scanner (see over)
+ */
 int _scan_d(chess_game *p_game, int location, int sign) {
   int scope_pos = location - 8;
   while (scope_pos >= 0 && p_game->board[scope_pos] == 0) {
@@ -274,6 +288,9 @@ int _scan_d(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Right row scanner (see over)
+ */
 int _scan_r(chess_game *p_game, int location, int sign) {
   int scope_pos = location + 1;
   while (scope_pos %8 != 0 && p_game->board[scope_pos] == 0) {
@@ -292,6 +309,9 @@ int _scan_r(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Left row scanner (see over)
+ */
 int _scan_l(chess_game *p_game, int location, int sign) {
   int scope_pos = location - 1;
   while (scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
@@ -310,6 +330,9 @@ int _scan_l(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Up Right diagonal scanner (see over)
+ */
 int _scan_ur(chess_game *p_game, int location, int sign) {
   int scope_pos = location + 9;
   while (scope_pos < 64 && scope_pos %8 != 0 &&
@@ -332,6 +355,9 @@ int _scan_ur(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Down Right diagonal scanner (see over)
+ */
 int _scan_dr(chess_game *p_game, int location, int sign) {
   int scope_pos = location - 7;
   while (scope_pos >= 0 && scope_pos %8 != 0 &&
@@ -354,6 +380,9 @@ int _scan_dr(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Up Left diagonal scanner (see over)
+ */
 int _scan_ul(chess_game *p_game, int location, int sign) {
   int scope_pos = location + 7;
   while (scope_pos < 64 && scope_pos %8 != 7 &&
@@ -376,6 +405,9 @@ int _scan_ul(chess_game *p_game, int location, int sign) {
 }
 
 
+/*
+ * Down Left diagonal scanner (see over)
+ */
 int _scan_dl(chess_game *p_game, int location, int sign) {
   int scope_pos = location - 9;
   while (scope_pos >= 0 && scope_pos %8 != 7 &&
@@ -400,7 +432,7 @@ int _scan_dl(chess_game *p_game, int location, int sign) {
 
 /*
  * Check if the player up is check or not by scanning all lines + diags starting
- * from the king
+ * from the king + watching for knights
  */
 int is_check(chess_game *p_game) {
   // +1 if white, -1 if black
@@ -680,6 +712,7 @@ int available_movements_raw(chess_game *p_game, int position, int *movements) {
  * Will the player be check after moving this ?
  * You must not be checked or move your king before calling this.
  * Only line / diag shared by king and moved piece is re-evaluated
+ * Either returns 1 or 0
  */
 int will_be_check(chess_game *p_game, int start, int arrival) {
   int sign = 2 * (p_game->board[start] > 0) - 1;
