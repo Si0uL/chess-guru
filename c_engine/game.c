@@ -314,10 +314,11 @@ int _scan_r(chess_game *p_game, int location, int sign) {
  */
 int _scan_l(chess_game *p_game, int location, int sign) {
   int scope_pos = location - 1;
-  while (scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
+  while (scope_pos >= 0 && scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
     scope_pos -= 1;
   }
-  if (scope_pos %8 != 7 && p_game->board[scope_pos] * sign < 0) {
+  if (scope_pos >= 0 && scope_pos % 8 != 7 &&
+    p_game->board[scope_pos] * sign < 0) {
     if (
       abs(p_game->board[scope_pos]) == 2 ||
       abs(p_game->board[scope_pos]) == 5 ||
@@ -566,11 +567,13 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
     }
     // Left
     scope_pos = position - 1;
-    while (scope_pos %8 != 7 && p_game->board[scope_pos] == 0) {
+    while (scope_pos >= 0 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] == 0) {
       add_mvt(scope_pos);
       scope_pos -= 1;
     }
-    if (scope_pos %8 != 7 && p_game->board[scope_pos] * sign < 0) {
+    if (scope_pos >= 0 && scope_pos % 8 != 7 &&
+      p_game->board[scope_pos] * sign < 0) {
       add_mvt(scope_pos);
     }
   }
@@ -701,7 +704,8 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
       add_mvt(position + 1);
     }
     // Left
-    if ((position - 1) % 8 != 7 && p_game->board[position - 1] * sign <= 0) {
+    if (position != 0 && (position - 1) % 8 != 7 &&
+      p_game->board[position - 1] * sign <= 0) {
       add_mvt(position - 1);
     }
     // Up-Right
