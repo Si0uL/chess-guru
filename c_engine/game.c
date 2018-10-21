@@ -129,16 +129,16 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
   int former_arrival = p_game->board[to];
 
   // Save unplay_infos
-  *(unplay_infos + 0) = from;
-  *(unplay_infos + 1) = to;
-  *(unplay_infos + 2) = former_start;
-  *(unplay_infos + 3) = former_arrival;
+  unplay_infos[0] = from;
+  unplay_infos[1] = to;
+  unplay_infos[2] = former_start;
+  unplay_infos[3] = former_arrival;
   if (p_game->w_turn) {
-    *(unplay_infos + 4) = p_game->castling_wl;
-    *(unplay_infos + 5) = p_game->castling_wr;
+    unplay_infos[4] = p_game->castling_wl;
+    unplay_infos[5] = p_game->castling_wr;
   } else {
-    *(unplay_infos + 4) = p_game->castling_bl;
-    *(unplay_infos + 5) = p_game->castling_br;
+    unplay_infos[4] = p_game->castling_bl;
+    unplay_infos[5] = p_game->castling_br;
   }
 
   // Move to arrival
