@@ -34,7 +34,7 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos);
 void unplay(chess_game *p_game, int *unplay_infos);
 
 
-int is_check(chess_game *p_game);
+int is_check(chess_game *p_game, int white_turn);
 
 
 int available_movements_raw(chess_game *p_game, int position, int *movements);

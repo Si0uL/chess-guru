@@ -434,10 +434,10 @@ int _scan_dl(chess_game *p_game, int location, int sign) {
  * Check if the player up is check or not by scanning all lines + diags starting
  * from the king + watching for knights
  */
-int is_check(chess_game *p_game) {
+int is_check(chess_game *p_game, int white_turn) {
   // +1 if white, -1 if black
-  int kpos, sign = 2 * p_game->w_turn - 1;
-  if (p_game->w_turn) {
+  int kpos, sign = 2 * white_turn - 1;
+  if (white_turn) {
     kpos = p_game->w_king_pos;
   } else {
     kpos = p_game->b_king_pos;

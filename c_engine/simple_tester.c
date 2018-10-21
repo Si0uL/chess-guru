@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
   printf("\nWhite Turn = %d\n", p_game->w_turn);
   print_board(p_game);
 
-  int unplay_infos[4];
+  int unplay_infos[6];
   play(p_game, 55, 47, unplay_infos);
   printf("\nWhite Turn = %d\n", p_game->w_turn);
   print_board(p_game);
@@ -32,7 +32,7 @@ int main(int argc, char const *argv[]) {
   printf("\nWhite Turn = %d\n", p_game->w_turn);
   print_board(p_game);
 
-  printf("\nIs check = %d\n", is_check(p_game));
+  printf("\nIs check = %d\n", is_check(p_game, p_game->w_turn));
 
   test_av_mvt_raw(p_game, 8);
   test_av_mvt_raw(p_game, 34);
