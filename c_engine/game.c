@@ -723,7 +723,7 @@ int will_be_check(chess_game *p_game, int start, int arrival) {
     kpos = p_game->b_king_pos;
   }
 
-  int delta_row = (start - kpos) / 8;
+  int delta_row = start / 8 - kpos / 8;
   int delta_col = (start - kpos) % 8;
   int to_return = 0;
 
