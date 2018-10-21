@@ -3,15 +3,17 @@
 
 #include "game.h"
 
-void test_av_mvt_raw(chess_game *p_game, int position) {
-  int *movements = malloc(50 * sizeof(int));
-  int found = available_movements_raw(p_game, position, movements);
+void test_av_mvt(chess_game *p_game, int position) {
+  int movements[30];
+  int cache[6];
+  int am_i_check = is_check(p_game, p_game->board[position] > 0);
+  int found = available_movements(p_game, position, am_i_check, movements,
+    cache);
   printf("Movements for position %d:\n", position);
   for (int i=0; i<found; i++) {
     printf("%d ", movements[i]);
   }
   printf("\n");
-  free(movements);
 }
 
 int main(int argc, char const *argv[]) {
@@ -34,12 +36,11 @@ int main(int argc, char const *argv[]) {
 
   printf("\nIs check = %d\n", is_check(p_game, p_game->w_turn));
 
-  test_av_mvt_raw(p_game, 8);
-  test_av_mvt_raw(p_game, 34);
-  test_av_mvt_raw(p_game, 4);
-  test_av_mvt_raw(p_game, 60);
-  test_av_mvt_raw(p_game, 57);
-  test_av_mvt_raw(p_game, 18);
+  test_av_mvt(p_game, 57);
+  test_av_mvt(p_game, 58);
+  test_av_mvt(p_game, 59);
+  test_av_mvt(p_game, 60);
+  test_av_mvt(p_game, 8);
 
   deallocate_game(p_game);
 

@@ -495,20 +495,40 @@ int is_check(chess_game *p_game, int white_turn) {
 
 
 /*
- * Puts all available movements (raw so wihout removing plays leading to a
- * check position) inside movements (moments should be allocated before).
- * Returns the number of movements found.
+ * Puts all available movements inside movements (moments should be allocated
+ * before). Adds castling postitions and checks if move doesn't affect
+ * checkstate. If not am_i_check, uses will_be_check() to save time on
+ * moves checking.
+ * six_long_int_cache is a pre-allocated 6-long int array only used to store
+ * temporary datas (when playing and unplaying)
+ * Returns the number of available movements found.
  */
-int available_movements_raw(chess_game *p_game, int position, int *movements) {
+int available_movements(chess_game *p_game, int position, int am_i_check,
+  int *movements, int *six_long_int_cache) {
+
   int found = 0;
   // +/- 1 according to the piece's color
   int sign = 2 * (p_game->board[position] > 0) - 1;
+  int w_turn = p_game->w_turn;
   int type = abs(p_game->board[position]);
   int scope_pos;
 
-  void add_mvt(int loc) {
-    movements[found] = loc;
-    found ++;
+  void add_mvt(int arrival) {
+    // Check if this move can be played without ending up being check
+    // If you do not move the king and are not check, use will_be_check()
+    if (type != 6 && am_i_check == 0) {
+      if (!will_be_check(p_game, position, arrival)) {
+        movements[found] = arrival;
+        found ++;
+      }
+    } else {
+      play(p_game, position, arrival, six_long_int_cache);
+      if (!is_check(p_game, w_turn)) {
+        movements[found] = arrival;
+        found ++;
+      }
+      unplay(p_game, six_long_int_cache);
+    }
   }
 
   // rook or queen
@@ -702,6 +722,8 @@ int available_movements_raw(chess_game *p_game, int position, int *movements) {
       p_game->board[position - 9] * sign <= 0) {
       add_mvt(position - 9);
     }
+
+    // TODO Add castling
   }
 
   return found;
