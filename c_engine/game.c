@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "game.h"
 
@@ -899,4 +900,51 @@ int will_be_check(chess_game *p_game, int start, int arrival) {
   p_game->board[start] = p_game->board[arrival];
   p_game->board[arrival] = cache;
   return to_return;
+};
+
+
+/*
+ * What if it worth to kill this
+ */
+int _score_per_piece(int piece) {
+  switch (abs(piece)) {
+    case 1: return 1;
+    case 2: return 5;
+    case 3: return 3;
+    case 4: return 3;
+    case 5: return 9;
+  }
+  return 0;
+}
+
+
+/*
+ * Buils an alpha beta tree and return the best play be do (stores it into
+ * best_from and best_to)
+ */
+void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
+  int *p_best_to) {
+
+  long int seen = 0;
+  int hero_sign = 2 * (p_game->w_turn) - 1;
+  double start = clock();
+  double time_elapsed;
+
+  // Allocate from and to arrays
+  int froms = malloc(100 * depth * sizeof(int));
+  int tos = malloc(100 * depth * sizeof(int));
+  int from_nbs[depth];
+  int to_nbs[depth];
+
+
+
+  // Deallocate
+  free(froms);
+  free(tos);
+
+  time_elapsed = (clock() - start) / CLOCKS_PER_SEC;
+  printf("Time elapsed: %f s\n", time_elapsed);
+  printf("Avg. Nodes/sec: %f\n", seen / time_elapsed);
+  printf("Nodes Seen: %li\n", seen);
+
 };

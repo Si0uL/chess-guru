@@ -46,3 +46,7 @@ int all_available_movements(chess_game *p_game, int w_turn, int am_i_check,
 
 
 int will_be_check(chess_game *p_game, int start, int arrival);
+
+
+void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
+  int *p_best_to);

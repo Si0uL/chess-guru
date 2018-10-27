@@ -35,6 +35,16 @@ void test_all_av_mvt(chess_game *p_game, int w_turn) {
   printf("\n");
 }
 
+void test_prediction(chess_game *p_game, int depth) {
+  int from, to;
+  // TODO remove this
+  from = 0;
+  to = 0;
+  alpha_beta_predict(p_game, depth, &from, &to);
+  printf("\nBest Move:\n%s : %d -> %d\n", number_to_piece(p_game->board[from]),
+    from, to);
+}
+
 int main(int argc, char const *argv[]) {
 
   chess_game *p_game = nil();
@@ -57,6 +67,8 @@ int main(int argc, char const *argv[]) {
 
   test_all_av_mvt(p_game, 0);
   test_all_av_mvt(p_game, 1);
+
+  test_prediction(p_game, 4);
 
   deallocate_game(p_game);
 
