@@ -510,7 +510,7 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
   int found = 0;
   // +/- 1 according to the piece's color
   int sign = 2 * (p_game->board[position] > 0) - 1;
-  int w_turn = p_game->w_turn;
+  int w_turn = p_game->board[position] > 0;
   int type = abs(p_game->board[position]);
   int scope_pos;
 
