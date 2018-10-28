@@ -919,6 +919,15 @@ int _score_per_piece(int piece) {
 
 
 /*
+ * Positive score increase for the guy who played this.
+ * TODO: improve this by adding castling, & central positionning...
+ */
+int _score_per_play(chess_game *p_game, int from, int to) {
+  return _score_per_piece(p_game->board[to]);
+}
+
+
+/*
  * Buils an alpha beta tree and return the best play be do (stores it into
  * best_from and best_to)
  */
