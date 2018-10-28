@@ -919,6 +919,19 @@ int _score_per_piece(int piece) {
 
 
 /*
+ * Total score (white is positive)
+ */
+int _total_w_score(chess_game *p_game) {
+  int to_return = 0;
+  for (int idx = 0; idx < 64; idx++) {
+    to_return += (2 * (p_game->board[idx] > 0) - 1) * \
+    _score_per_piece(p_game->board[idx]);
+  }
+  return to_return;
+}
+
+
+/*
  * Positive score increase for the guy who played this.
  * TODO: improve this by adding castling, & central positionning...
  */
