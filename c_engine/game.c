@@ -65,6 +65,11 @@ void print_board(chess_game *p_game) {
   }
 }
 
+void print_location(int location) {
+  int col_label[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+  printf("%c%d", col_label[8 - location / 8], location % 8);
+}
+
 void load_game(chess_game *p_game, char *path) {
   FILE *p_file = NULL;
 

@@ -25,6 +25,9 @@ void deallocate_game(chess_game *p_game);
 void print_board(chess_game *p_game);
 
 
+void print_location(int location);
+
+
 void load_game(chess_game *p_game, char *path);
 
 
