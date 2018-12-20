@@ -952,18 +952,163 @@ int _score_per_play(chess_game *p_game, int from, int to) {
 void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
   int *p_best_to) {
 
+  if (depth < 2 || depth % 2 != 0)
+    error(1, 0, "Depth should be >= 2 and even !\n");
+
   long int seen = 0;
   int hero_sign = 2 * (p_game->w_turn) - 1;
   double start = clock();
   double time_elapsed;
 
   // Allocate from and to arrays
-  int froms = malloc(100 * depth * sizeof(int));
-  int tos = malloc(100 * depth * sizeof(int));
-  int from_nbs[depth];
-  int to_nbs[depth];
+  int *froms = malloc(100 * depth * sizeof(int));
+  int *tos = malloc(100 * depth * sizeof(int));
 
+  /* Length of tree for each depth (available mouvements) */
+  int mvt_nbs[depth];
 
+  /* Unplays caches (one per depth) */
+  int unplay_caches[6 * depth];
+
+  /* Common cache -> we don't care (only for all_available_movements) */
+  int common_cache[6];
+
+  /* Where am I in the tree ? (idx on each depth) */
+  int current_depth = 0;
+  int current_index[depth];
+  for (int idx=0; idx < depth; idx++) current_index[idx] = -1;
+
+  /* Nu values at every depth */
+  int nus[depth + 1];
+
+  /* Best index (for depth 0) */
+  int best_index;
+
+  /* -------------------------------------------------------------------------*/
+  /* Main Eval Loop */
+  while (current_depth >= 0) {
+
+    /* 1. If we touch the bottom, go up */
+    if (current_depth == depth) {
+
+      /* increment common node counter */
+      seen ++;
+      /* Update Nu */
+      nus[current_depth] = p_game->w_score * hero_sign;
+      /* Unplay the move that made us come here */
+      unplay(p_game, &unplay_caches[current_depth - 1]);
+      /* Decrese depth */
+      current_depth --;
+
+    /* 2. If we have not already (re)initialized moves at this depth & go down*/
+    } else if (current_index[current_depth] == -1) {
+
+      /* Evaluates all available movements for lower depth */
+      mvt_nbs[current_depth] = all_available_movements(
+        p_game,
+        p_game->w_turn,
+        is_check(p_game, p_game->w_turn),
+        &froms[current_depth * 100],
+        &tos[current_depth * 100],
+        common_cache
+      );
+
+      /* If no mouvements are available: draw or mate (should not be called at
+      depth 0 !!)*/
+      if (mvt_nbs[current_depth] == 0) {
+        /* Remove pathological case */
+        if (current_depth == 0)
+          error(1, 0, "You called the engine while the game is already over !");
+        /* checkmate +/-1000 if hero wins or loses */
+        if (is_check(p_game, p_game->w_turn)) {
+          nus[current_depth] = 1000 * (2 * (current_depth % 2 == 0) - 1);
+        /* draw */
+        } else {
+          nus[current_depth] = 0;
+        }
+        /* Counts as a terminal node, so increase seen */
+        seen ++;
+        /* Init index at this depth so that it will be re-init next time */
+        current_index[current_depth] = -1;
+        /* Unplay the move that made us come here */
+        unplay(p_game, &unplay_caches[current_depth - 1]);
+        /* Decrese depth */
+        current_depth --;
+
+      /* Normal case: no end-game -> go deeper through all possibilities */
+      } else {
+        /* Set your index at this depth */
+        current_index[current_depth] = 0;
+        /* Initialize Nu for this depth (+/- 5000) */
+        nus[current_depth] = 5000 * (2 * (current_depth % 2 == 1) - 1);
+
+        /* play the first move */
+        play(
+          p_game,
+          froms[100 * current_depth + current_index[current_depth]],
+          tos[100 * current_depth + current_index[current_depth]],
+          &unplay_caches[current_depth]
+        );
+        /* increase depth */
+        current_depth ++;
+      }
+
+    /* 3. If we have reached the end of the moves at this depth, go up */
+    } else if (current_index[current_depth] == mvt_nbs[current_depth]) {
+
+      /* Update Nu */
+      if (current_depth % 2 == 0) {
+        if (nus[current_depth + 1] > nus[current_depth]) {
+          nus[current_depth] = nus[current_depth + 1];
+          if (current_depth == 0)
+            best_index = current_index[0];
+        }
+      } else if (nus[current_depth + 1] < nus[current_depth])
+          nus[current_depth + 1] = nus[current_depth];
+
+      /* Init index at this depth so that it will be re-initialized next time */
+      current_index[current_depth] = -1;
+
+      /* Unplay the move that made us come here (unless depth == 0, then this is
+       the final loop)*/
+      if (current_depth != 0)
+        unplay(p_game, &unplay_caches[current_depth - 1]);
+
+      /* Decrese depth */
+      current_depth --;
+
+    /* 4. We Check next move at this depth (we just went up), then go down */
+    } else {
+
+      /* Update Nu */
+      if (current_depth % 2 == 0) {
+        if (nus[current_depth + 1] > nus[current_depth]) {
+          nus[current_depth] = nus[current_depth + 1];
+          if (current_depth == 0)
+            best_index = current_index[0];
+        }
+      } else if (nus[current_depth + 1] < nus[current_depth])
+          nus[current_depth] = nus[current_depth];
+
+      /* increase index at this depth */
+      current_index[current_depth] ++;
+
+      /* play the next move */
+      play(
+        p_game,
+        froms[100 * current_depth + current_index[current_depth]],
+        tos[100 * current_depth + current_index[current_depth]],
+        &unplay_caches[current_depth]
+      );
+      /* increase depth */
+      current_depth ++;
+    }
+
+  }
+
+  /* Store best move in the given destinations */
+  *p_best_from = froms[best_index];
+  *p_best_to = tos[best_index];
 
   // Deallocate
   free(froms);
