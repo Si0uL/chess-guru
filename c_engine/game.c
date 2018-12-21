@@ -631,7 +631,7 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
       if (sign > 0 && position > 7 && position < 16 &&
         p_game->board[position + 16] == 0) {
         add_mvt(position + 16);
-      } else if (sign < 0 && position > 55 && position < 64 &&
+      } else if (sign < 0 && position > 47 && position < 56 &&
         p_game->board[position - 16] == 0) {
         add_mvt(position - 16);
       }

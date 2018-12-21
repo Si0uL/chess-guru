@@ -27,7 +27,7 @@ void test_all_av_mvt(chess_game *p_game, int w_turn) {
   int am_i_check = is_check(p_game, w_turn);
   int found = all_available_movements(p_game, w_turn, am_i_check, from, to_,
     cache);
-  printf("Movements for w_turn = %d:\n", w_turn);
+  printf("Movements for w_turn = %d (total: %d):\n", w_turn, found);
   for (int i=0; i<found; i++) {
     printf("%s: ", number_to_piece(p_game->board[from[i]]));
     print_location(from[i]);
