@@ -75,45 +75,35 @@ void load_game(chess_game *p_game, char *path) {
 
   p_file = fopen(path, "r");
 
-  if (p_file == NULL) {
+  if (p_file == NULL)
       error(1, 0, "Cannot read file %s!\n", path);
-  }
 
   // Read game parameters
-  if (fscanf(p_file, "w_turn = %d\n", &p_game->w_turn) != 1) {
+  if (fscanf(p_file, "w_turn = %d\n", &p_game->w_turn) != 1)
     printf("%s\n", "Error reading w_turn");
-  };
-  if (fscanf(p_file, "w_score = %d\n", &p_game->w_score) != 1) {
+  if (fscanf(p_file, "w_score = %d\n", &p_game->w_score) != 1)
     printf("%s\n", "Error reading w_score");
-  };
-  if (fscanf(p_file, "w_king_pos = %d\n", &p_game->w_king_pos) != 1) {
+  if (fscanf(p_file, "w_king_pos = %d\n", &p_game->w_king_pos) != 1)
     printf("%s\n", "Error reading w_king_pos");
-  };
-  if (fscanf(p_file, "b_king_pos = %d\n", &p_game->b_king_pos) != 1) {
+  if (fscanf(p_file, "b_king_pos = %d\n", &p_game->b_king_pos) != 1)
     printf("%s\n", "Error reading b_king_pos");
-  };
-  if (fscanf(p_file, "castling_wl = %d\n", &p_game->castling_wl) != 1) {
+  if (fscanf(p_file, "castling_wl = %d\n", &p_game->castling_wl) != 1)
     printf("%s\n", "Error reading castling_wl");
-  };
-  if (fscanf(p_file, "castling_wr = %d\n", &p_game->castling_wr) != 1) {
+  if (fscanf(p_file, "castling_wr = %d\n", &p_game->castling_wr) != 1)
     printf("%s\n", "Error reading castling_wr");
-  };
-  if (fscanf(p_file, "castling_bl = %d\n", &p_game->castling_bl) != 1) {
+  if (fscanf(p_file, "castling_bl = %d\n", &p_game->castling_bl) != 1)
     printf("%s\n", "Error reading castling_bl");
-  };
-  if (fscanf(p_file, "castling_br = %d\n", &p_game->castling_br) != 1) {
+  if (fscanf(p_file, "castling_br = %d\n", &p_game->castling_br) != 1)
     printf("%s\n", "Error reading castling_br");
-  };
 
   // Read board
   int board_idx = 0;
   int fscanf_result = 1;
 
   while (fscanf_result != EOF) {
-      if (fscanf_result != 1) {
+      if (fscanf_result != 1)
           error(1, 0, "Line number %d is not syntactically correct!\n",
                 board_idx + 9);
-      }
 
       fscanf_result = fscanf(p_file, "%d", (p_game->board + board_idx));
       board_idx += 1;
@@ -553,27 +543,24 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
       scope_pos += 8;
     }
     // eat a potential enemy piece
-    if (scope_pos < 64 && p_game->board[scope_pos] * sign < 0) {
+    if (scope_pos < 64 && p_game->board[scope_pos] * sign < 0)
       add_mvt(scope_pos);
-    }
     // Down
     scope_pos = position - 8;
     while (scope_pos >= 0 && p_game->board[scope_pos] == 0) {
       add_mvt(scope_pos);
       scope_pos -= 8;
     }
-    if (scope_pos >= 0 && p_game->board[scope_pos] * sign < 0) {
+    if (scope_pos >= 0 && p_game->board[scope_pos] * sign < 0)
       add_mvt(scope_pos);
-    }
     // Right
     scope_pos = position + 1;
     while (scope_pos %8 != 0 && p_game->board[scope_pos] == 0) {
       add_mvt(scope_pos);
       scope_pos += 1;
     }
-    if (scope_pos %8 != 0 && p_game->board[scope_pos] * sign < 0) {
+    if (scope_pos %8 != 0 && p_game->board[scope_pos] * sign < 0)
       add_mvt(scope_pos);
-    }
     // Left
     scope_pos = position - 1;
     while (scope_pos >= 0 && scope_pos % 8 != 7 &&
@@ -650,50 +637,40 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
       }
     }
     // Kill on the left
-    if (position%8 != 0 && p_game->board[position - 1 + 8 * sign] * sign < 0) {
+    if (position%8 != 0 && p_game->board[position - 1 + 8 * sign] * sign < 0)
       add_mvt(position - 1 + 8 * sign); // position +7/-9
-    }
     // Kill on the right
-    if (position%8 != 7 && p_game->board[position + 1 + 8 * sign] * sign < 0) {
+    if (position%8 != 7 && p_game->board[position + 1 + 8 * sign] * sign < 0)
       add_mvt(position + 1 + 8 * sign); // position +9/-7
-    }
   }
 
   // knight
   if (type == 3) {
     if (position % 8 != 7) {
-      if (position + 17 < 64 && p_game->board[position + 17] * sign <= 0) {
+      if (position + 17 < 64 && p_game->board[position + 17] * sign <= 0)
         add_mvt(position + 17);
-      }
-      if (position - 15 >= 0 && p_game->board[position - 15] * sign <= 0) {
+      if (position - 15 >= 0 && p_game->board[position - 15] * sign <= 0)
         add_mvt(position - 15);
-      }
 
       if (position % 8 != 6) {
-        if (position + 10 < 64 && p_game->board[position + 10] * sign <= 0) {
+        if (position + 10 < 64 && p_game->board[position + 10] * sign <= 0)
           add_mvt(position + 10);
-        }
-        if (position - 6 >= 0 && p_game->board[position - 6] * sign <= 0) {
+        if (position - 6 >= 0 && p_game->board[position - 6] * sign <= 0)
           add_mvt(position - 6);
-        }
       }
     }
 
     if (position % 8 != 0) {
-      if (position + 15 < 64 && p_game->board[position + 15] * sign <= 0) {
+      if (position + 15 < 64 && p_game->board[position + 15] * sign <= 0)
         add_mvt(position + 15);
-      }
-      if (position - 17 >= 0 && p_game->board[position - 17] * sign <= 0) {
+      if (position - 17 >= 0 && p_game->board[position - 17] * sign <= 0)
         add_mvt(position - 17);
-      }
 
       if (position % 8 != 1) {
-        if (position + 6 < 64 && p_game->board[position + 6] * sign <= 0) {
+        if (position + 6 < 64 && p_game->board[position + 6] * sign <= 0)
           add_mvt(position + 6);
-        }
-        if (position - 10 >= 0 && p_game->board[position - 10] * sign <= 0) {
+        if (position - 10 >= 0 && p_game->board[position - 10] * sign <= 0)
           add_mvt(position - 10);
-        }
       }
     }
   }
@@ -701,17 +678,14 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
   // king
   if (type == 6) {
     // Up
-    if (position + 8 < 64 && p_game->board[position + 8] * sign <= 0) {
+    if (position + 8 < 64 && p_game->board[position + 8] * sign <= 0)
       add_mvt(position + 8);
-    }
     // Down
-    if (position - 8 >= 0 && p_game->board[position - 8] * sign <= 0) {
+    if (position - 8 >= 0 && p_game->board[position - 8] * sign <= 0)
       add_mvt(position - 8);
-    }
     // Right
-    if ((position + 1) % 8 != 0 && p_game->board[position + 1] * sign <= 0) {
+    if ((position + 1) % 8 != 0 && p_game->board[position + 1] * sign <= 0)
       add_mvt(position + 1);
-    }
     // Left
     if (position != 0 && (position - 1) % 8 != 7 &&
       p_game->board[position - 1] * sign <= 0) {
