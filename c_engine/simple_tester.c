@@ -29,8 +29,11 @@ void test_all_av_mvt(chess_game *p_game, int w_turn) {
     cache);
   printf("Movements for w_turn = %d:\n", w_turn);
   for (int i=0; i<found; i++) {
-    printf("%s: %d -> %d\n", number_to_piece(p_game->board[from[i]]), from[i],
-      to_[i]);
+    printf("%s: ", number_to_piece(p_game->board[from[i]]));
+    print_location(from[i]);
+    printf(" -> ");
+    print_location(to_[i]);
+    printf("\n");
   }
   printf("\n");
 }
@@ -41,15 +44,16 @@ void test_prediction(chess_game *p_game, int depth) {
   from = 0;
   to = 0;
   alpha_beta_predict(p_game, depth, &from, &to);
-  printf("\nBest Move:\n%s : %d -> %d\n", number_to_piece(p_game->board[from]),
-    from, to);
+  printf("\nBest Move:\n%s : ", number_to_piece(p_game->board[from]));
+  print_location(from);
+  printf(" -> ");
+  print_location(to);
+  printf("\n");
 }
 
 int main(int argc, char const *argv[]) {
 
   chess_game *p_game = nil();
-  printf("White Turn = %d\n", p_game->w_turn);
-  print_board(p_game);
   load_game(p_game, "board.txt");
   printf("\nWhite Turn = %d\n", p_game->w_turn);
   print_board(p_game);

@@ -67,7 +67,7 @@ void print_board(chess_game *p_game) {
 
 void print_location(int location) {
   int col_label[] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-  printf("%c%d", col_label[location / 8], location % 8 + 1);
+  printf("%c%d", col_label[location % 8], location / 8 + 1);
 }
 
 void load_game(chess_game *p_game, char *path) {
@@ -153,14 +153,13 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
   p_game->board[from] = 0;
 
   // If pawn at edge
-  if (abs(former_start) == 1 && (to >= 56 || to <= 7)) {
+  if (abs(former_start) == 1 && (to >= 56 || to <= 7))
     p_game->board[to] = former_start * 5; // transfrom it to queen
-  }
 
   // If king
   if (abs(former_start) == 6) {
     // Update king's position and Remove castling possiilities
-    if (p_game->w_turn) {
+    if (former_start > 0) {
       p_game->w_king_pos = to;
       p_game->castling_wl = 0;
       p_game->castling_wr = 0;
@@ -192,7 +191,11 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
 
 };
 
-
+/*
+ * Unplay_unfos has to be a 6-long allocated int array
+ * It will the contain [from, to, former_start, former_arrival, former_CL,
+ * former_CR]
+ */
 void unplay(chess_game *p_game, int *unplay_infos) {
 
   // Update Turn
@@ -203,7 +206,7 @@ void unplay(chess_game *p_game, int *unplay_infos) {
   p_game->board[unplay_infos[1]] = unplay_infos[3];
 
   // Restore previous castling permissions
-  if (p_game->w_turn) {
+  if (unplay_infos[2] > 0) {
     p_game->castling_wl = unplay_infos[4];
     p_game->castling_wr = unplay_infos[5];
   } else {
@@ -218,7 +221,7 @@ void unplay(chess_game *p_game, int *unplay_infos) {
     int to = unplay_infos[1];
 
     // Update king position
-    if (p_game->w_turn) {
+    if (unplay_infos[2] > 0) {
       p_game->w_king_pos = from;
     } else {
       p_game->b_king_pos = from;
@@ -996,7 +999,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       /* Update Nu */
       nus[current_depth] = p_game->w_score * hero_sign;
       /* Unplay the move that made us come here */
-      unplay(p_game, &unplay_caches[current_depth - 1]);
+      unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
       /* Decrese depth */
       current_depth --;
 
@@ -1031,7 +1034,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         /* Init index at this depth so that it will be re-init next time */
         current_index[current_depth] = -1;
         /* Unplay the move that made us come here */
-        unplay(p_game, &unplay_caches[current_depth - 1]);
+        unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
         /* Decrese depth */
         current_depth --;
 
@@ -1047,7 +1050,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
           p_game,
           froms[100 * current_depth + current_index[current_depth]],
           tos[100 * current_depth + current_index[current_depth]],
-          &unplay_caches[current_depth]
+          &unplay_caches[6 * current_depth]
         );
         /* increase depth */
         current_depth ++;
@@ -1072,7 +1075,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       /* Unplay the move that made us come here (unless depth == 0, then this is
        the final loop)*/
       if (current_depth != 0)
-        unplay(p_game, &unplay_caches[current_depth - 1]);
+        unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
 
       /* Decrese depth */
       current_depth --;
@@ -1098,7 +1101,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         p_game,
         froms[100 * current_depth + current_index[current_depth]],
         tos[100 * current_depth + current_index[current_depth]],
-        &unplay_caches[current_depth]
+        &unplay_caches[6 * current_depth]
       );
       /* increase depth */
       current_depth ++;
