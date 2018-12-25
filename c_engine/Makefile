@@ -1,7 +1,21 @@
-GCC = gcc
-CFLAGS = -g -std=c99 -Wall -I
+CC=gcc
+CFLAGS=-W -O3 -Wall -std=c99 -pedantic
+LDFLAGS=
+EXEC=simple_tester
 
-.DEFAULT: all
+all: $(EXEC)
 
-simple_tester: simple_tester.c game.c
-	$(GCC) $(CFLAGS) -o $^
+simple_tester: game.o simple_tester.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+game.o: game.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+simple_tester.o: simple_tester.c game.h
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+clean:
+	rm -rf *.o
+
+mrproper: clean
+	rm -rf $(EXEC)
