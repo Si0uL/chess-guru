@@ -118,12 +118,13 @@ void load_game(chess_game *p_game, char *path) {
 /*
  * Unplay_unfos has to be a 6-long allocated int array
  * It will the contain [from, to, former_start, former_arrival, former_CL,
- * former_CR]
+ * former_CR, former_wscore]
  */
 void play(chess_game *p_game, int from, int to, int *unplay_infos) {
 
   int former_start = p_game->board[from];
   int former_arrival = p_game->board[to];
+  int sign = 2 * (p_game->board[from] > 0) - 1;
 
   // Save unplay_infos
   unplay_infos[0] = from;
@@ -137,15 +138,21 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
     unplay_infos[4] = p_game->castling_bl;
     unplay_infos[5] = p_game->castling_br;
   }
+  unplay_infos[6] = p_game->w_score;
+
+  // If you ate somebody, update score
+  p_game->w_score += _score_per_piece(former_arrival);
 
   // Move to arrival
   p_game->board[to] = former_start;
   // Remove from former position
   p_game->board[from] = 0;
 
-  // If pawn at edge
-  if (abs(former_start) == 1 && (to >= 56 || to <= 7))
+  // If pawn at edge: get a queen
+  if (abs(former_start) == 1 && (to >= 56 || to <= 7)) {
     p_game->board[to] = former_start * 5; // transfrom it to queen
+    p_game->w_score += sign * 9;
+  }
 
   // If king
   if (abs(former_start) == 6) {
@@ -185,7 +192,7 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
 /*
  * Unplay_unfos has to be a 6-long allocated int array
  * It will the contain [from, to, former_start, former_arrival, former_CL,
- * former_CR]
+ * former_CR, former_wscore]
  */
 void unplay(chess_game *p_game, int *unplay_infos) {
 
@@ -204,6 +211,7 @@ void unplay(chess_game *p_game, int *unplay_infos) {
     p_game->castling_bl = unplay_infos[4];
     p_game->castling_br = unplay_infos[5];
   }
+  p_game->w_score = unplay_infos[6];
 
   // If king unmoved
   if (abs(unplay_infos[2]) == 6) {
@@ -500,12 +508,12 @@ int is_check(chess_game *p_game, int white_turn) {
  * before). Adds castling postitions and checks if move doesn't affect
  * checkstate. If not am_i_check, uses will_be_check() to save time on
  * moves checking.
- * six_long_int_cache is a pre-allocated 6-long int array only used to store
+ * seven_long_int_cache is a pre-allocated 6-long int array only used to store
  * temporary datas (when playing and unplaying)
  * Returns the number of available movements found.
  */
 int available_movements(chess_game *p_game, int position, int am_i_check,
-  int *from, int *to_, int *six_long_int_cache) {
+  int *from, int *to_, int *seven_long_int_cache) {
 
   int found = 0;
   // +/- 1 according to the piece's color
@@ -524,13 +532,13 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         found ++;
       }
     } else {
-      play(p_game, position, arrival, six_long_int_cache);
+      play(p_game, position, arrival, seven_long_int_cache);
       if (!is_check(p_game, w_turn)) {
         from[found] = position;
         to_[found] = arrival;
         found ++;
       }
-      unplay(p_game, six_long_int_cache);
+      unplay(p_game, seven_long_int_cache);
     }
   }
 
@@ -726,17 +734,17 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         // arrival)
         int checked = 0;
         // Am i check on the way ?
-        play(p_game, position, 3, six_long_int_cache);
+        play(p_game, position, 3, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         // Am i check at the arrival ?
-        play(p_game, position, 2, six_long_int_cache);
+        play(p_game, position, 2, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         if (checked == 2) {
           from[found] = position;
           to_[found] = 2;
@@ -750,17 +758,17 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         // arrival)
         int checked = 0;
         // Am i check on the way ?
-        play(p_game, position, 5, six_long_int_cache);
+        play(p_game, position, 5, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         // Am i check at the arrival ?
-        play(p_game, position, 6, six_long_int_cache);
+        play(p_game, position, 6, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         if (checked == 2) {
           from[found] = position;
           to_[found] = 6;
@@ -776,17 +784,17 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         // arrival)
         int checked = 0;
         // Am i check on the way ?
-        play(p_game, position, 59, six_long_int_cache);
+        play(p_game, position, 59, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         // Am i check at the arrival ?
-        play(p_game, position, 58, six_long_int_cache);
+        play(p_game, position, 58, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         if (checked == 2) {
           from[found] = position;
           to_[found] = 58;
@@ -800,17 +808,17 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
         // arrival)
         int checked = 0;
         // Am i check on the way ?
-        play(p_game, position, 61, six_long_int_cache);
+        play(p_game, position, 61, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         // Am i check at the arrival ?
-        play(p_game, position, 62, six_long_int_cache);
+        play(p_game, position, 62, seven_long_int_cache);
         if (!is_check(p_game, w_turn)) {
           checked ++;
         }
-        unplay(p_game, six_long_int_cache);
+        unplay(p_game, seven_long_int_cache);
         if (checked == 2) {
           from[found] = position;
           to_[found] = 62;
@@ -825,14 +833,14 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
 
 
 int all_available_movements(chess_game *p_game, int w_turn, int am_i_check,
-  int *from, int *to_, int *six_long_int_cache) {
+  int *from, int *to_, int *seven_long_int_cache) {
 
   int found = 0;
   int sign = 2 * (w_turn > 0) - 1;
   for (int pos = 0; pos < 64; pos++) {
     if (p_game->board[pos] * sign > 0) {
       found += available_movements(p_game, pos, am_i_check, from + found,
-        to_ + found, six_long_int_cache);
+        to_ + found, seven_long_int_cache);
     }
   }
   return found;
@@ -887,15 +895,16 @@ int will_be_check(chess_game *p_game, int start, int arrival) {
 
 
 /*
- * What if it worth to kill this
+ * What is it worth to kill this (>0 if a black is killed)
  */
 int _score_per_piece(int piece) {
+  int sign = 2 * (piece < 0) - 1;
   switch (abs(piece)) {
-    case 1: return 1;
-    case 2: return 5;
-    case 3: return 3;
-    case 4: return 3;
-    case 5: return 9;
+    case 1: return 1 * sign;
+    case 2: return 5 * sign;
+    case 3: return 3 * sign;
+    case 4: return 3 * sign;
+    case 5: return 9 * sign;
   }
   return 0;
 }
@@ -946,10 +955,10 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
   int mvt_nbs[depth];
 
   /* Unplays caches (one per depth) */
-  int unplay_caches[6 * depth];
+  int unplay_caches[7 * depth];
 
   /* Common cache -> we don't care (only for all_available_movements) */
-  int common_cache[6];
+  int common_cache[7];
 
   /* Where am I in the tree ? (idx on each depth) */
   int current_depth = 0;
@@ -974,7 +983,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       /* Update Nu */
       nus[current_depth] = p_game->w_score * hero_sign;
       /* Unplay the move that made us come here */
-      unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
+      unplay(p_game, &unplay_caches[7 * (current_depth - 1)]);
       /* Decrese depth */
       current_depth --;
 
@@ -1009,7 +1018,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         /* Init index at this depth so that it will be re-init next time */
         current_index[current_depth] = -1;
         /* Unplay the move that made us come here */
-        unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
+        unplay(p_game, &unplay_caches[7 * (current_depth - 1)]);
         /* Decrese depth */
         current_depth --;
 
@@ -1025,7 +1034,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
           p_game,
           froms[100 * current_depth + current_index[current_depth]],
           tos[100 * current_depth + current_index[current_depth]],
-          &unplay_caches[6 * current_depth]
+          &unplay_caches[7 * current_depth]
         );
         /* increase depth */
         current_depth ++;
@@ -1050,7 +1059,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       /* Unplay the move that made us come here (unless depth == 0, then this is
        the final loop)*/
       if (current_depth != 0)
-        unplay(p_game, &unplay_caches[6 * (current_depth - 1)]);
+        unplay(p_game, &unplay_caches[7 * (current_depth - 1)]);
 
       /* Decrese depth */
       current_depth --;
@@ -1076,7 +1085,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         p_game,
         froms[100 * current_depth + current_index[current_depth]],
         tos[100 * current_depth + current_index[current_depth]],
-        &unplay_caches[6 * current_depth]
+        &unplay_caches[7 * current_depth]
       );
       /* increase depth */
       current_depth ++;

@@ -23,7 +23,7 @@ char *number_to_piece(int nb) {
 
 void test_all_av_mvt(chess_game *p_game, int w_turn) {
   int from[100], to_[100];
-  int cache[6];
+  int cache[7];
   int am_i_check = is_check(p_game, w_turn);
   int found = all_available_movements(p_game, w_turn, am_i_check, from, to_,
     cache);
@@ -51,20 +51,20 @@ void test_prediction(chess_game *p_game, int depth) {
   printf("\n");
 }
 
-int main(int argc, char const *argv[]) {
+int main() {
 
   chess_game *p_game = nil();
   load_game(p_game, "board.txt");
-  printf("\nWhite Turn = %d\n", p_game->w_turn);
+  printf("\nWhite Turn = %d | W_Score = %d\n", p_game->w_turn, p_game->w_score);
   print_board(p_game);
 
-  int unplay_infos[6];
-  play(p_game, 55, 47, unplay_infos);
-  printf("\nWhite Turn = %d\n", p_game->w_turn);
+  int unplay_infos[7];
+  play(p_game, 28, 35, unplay_infos);
+  printf("\nWhite Turn = %d | W_Score = %d\n", p_game->w_turn, p_game->w_score);
   print_board(p_game);
 
   unplay(p_game, unplay_infos);
-  printf("\nWhite Turn = %d\n", p_game->w_turn);
+  printf("\nWhite Turn = %d | W_Score = %d\n", p_game->w_turn, p_game->w_score);
   print_board(p_game);
 
   printf("\nIs check = %d\n", is_check(p_game, p_game->w_turn));
@@ -72,7 +72,7 @@ int main(int argc, char const *argv[]) {
   test_all_av_mvt(p_game, 0);
   test_all_av_mvt(p_game, 1);
 
-  test_prediction(p_game, 4);
+  test_prediction(p_game, 6);
 
   deallocate_game(p_game);
 
