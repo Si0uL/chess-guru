@@ -998,7 +998,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
           error(1, 0, "You called the engine while the game is already over !");
         /* checkmate +/-1000 if hero wins or loses */
         if (is_check(p_game, p_game->w_turn)) {
-          nus[current_depth] = 1000 * (2 * (current_depth % 2 == 0) - 1);
+          nus[current_depth] = 1000 * (2 * (current_depth % 2 == 1) - 1);
         /* draw */
         } else {
           nus[current_depth] = 0;
@@ -1041,7 +1041,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
             best_index = current_index[0];
         }
       } else if (nus[current_depth + 1] < nus[current_depth])
-          nus[current_depth + 1] = nus[current_depth];
+          nus[current_depth] = nus[current_depth + 1];
 
       /* Init index at this depth so that it will be re-initialized next time */
       current_index[current_depth] = -1;
@@ -1065,7 +1065,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
             best_index = current_index[0];
         }
       } else if (nus[current_depth + 1] < nus[current_depth])
-          nus[current_depth] = nus[current_depth];
+          nus[current_depth] = nus[current_depth + 1];
 
       /* increase index at this depth */
       current_index[current_depth] ++;
