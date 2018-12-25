@@ -965,8 +965,9 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
   int current_index[depth];
   for (int idx=0; idx < depth; idx++) current_index[idx] = -1;
 
-  /* Nu values at every depth */
+  /* Nu, Alpha, Beta values at every depth */
   int nus[depth + 1];
+  int alphas[depth], betas[depth];
 
   /* Best index (for depth 0) */
   int best_index;
@@ -1028,6 +1029,14 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         current_index[current_depth] = 0;
         /* Initialize Nu for this depth (+/- 5000) */
         nus[current_depth] = 5000 * (2 * (current_depth % 2 == 1) - 1);
+        /* Initialize Alpha and Beta from father node's values */
+        if (current_depth == 0) {
+          alphas[current_depth] = -5000;
+          betas[current_depth] = 5000;
+        } else {
+          alphas[current_depth] = alphas[current_depth - 1];
+          betas[current_depth] = betas[current_depth - 1];
+        }
 
         /* play the first move */
         play(
@@ -1077,18 +1086,35 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       } else if (nus[current_depth + 1] < nus[current_depth])
           nus[current_depth] = nus[current_depth + 1];
 
-      /* increase index at this depth */
-      current_index[current_depth] ++;
+      /* Update Alpha or Beta */
+      if (current_depth % 2 == 0) {
+        if (nus[current_depth] > alphas[current_depth])
+          alphas[current_depth] = nus[current_depth];
+      } else if (nus[current_depth] < betas[current_depth])
+        betas[current_depth] = nus[current_depth];
 
-      /* play the next move */
-      play(
-        p_game,
-        froms[100 * current_depth + current_index[current_depth]],
-        tos[100 * current_depth + current_index[current_depth]],
-        &unplay_caches[7 * current_depth]
-      );
-      /* increase depth */
-      current_depth ++;
+      /* Break Condition: if true, go up without seeing the following */
+      if (alphas[current_depth] >= betas[current_depth] ||
+        alphas[current_depth] > 900 ||
+        betas[current_depth] < -900) {
+        /* To trigger case number 3. */
+        current_index[current_depth] = mvt_nbs[current_depth] - 1;
+      /* Regular Case, go down again */
+      } else {
+        /* increase index at this depth */
+        current_index[current_depth] ++;
+
+        /* play the next move */
+        play(
+          p_game,
+          froms[100 * current_depth + current_index[current_depth]],
+          tos[100 * current_depth + current_index[current_depth]],
+          &unplay_caches[7 * current_depth]
+        );
+        /* increase depth */
+        current_depth ++;
+      }
+
     }
 
   }
