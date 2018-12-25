@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <error.h>
 
 #include "game.h"
 
@@ -47,12 +48,12 @@ chess_game *nil() {
     }
   }
   return p_g;
-};
+}
 
 void deallocate_game(chess_game *p_game) {
   free(p_game->board);
   free(p_game);
-};
+}
 
 void print_board(chess_game *p_game) {
   char labels[] = {' ', 'P', 'R', 'K', 'B', 'Q', 'G'};
@@ -112,7 +113,7 @@ void load_game(chess_game *p_game, char *path) {
   fclose(p_file);
 
   p_file = NULL;
-};
+}
 
 /*
  * Unplay_unfos has to be a 6-long allocated int array
@@ -179,7 +180,7 @@ void play(chess_game *p_game, int from, int to, int *unplay_infos) {
   // Update Turn
   p_game->w_turn = (p_game->w_turn + 1) % 2;
 
-};
+}
 
 /*
  * Unplay_unfos has to be a 6-long allocated int array
@@ -234,7 +235,7 @@ void unplay(chess_game *p_game, int *unplay_infos) {
       }
     }
   }
-};
+}
 
 
 /*
@@ -491,7 +492,7 @@ int is_check(chess_game *p_game, int white_turn) {
   }
 
   return 0;
-};
+}
 
 
 /*
@@ -820,7 +821,7 @@ int available_movements(chess_game *p_game, int position, int am_i_check,
   }
 
   return found;
-};
+}
 
 
 int all_available_movements(chess_game *p_game, int w_turn, int am_i_check,
@@ -835,7 +836,7 @@ int all_available_movements(chess_game *p_game, int w_turn, int am_i_check,
     }
   }
   return found;
-};
+}
 
 
 /*
@@ -882,7 +883,7 @@ int will_be_check(chess_game *p_game, int start, int arrival) {
   p_game->board[start] = p_game->board[arrival];
   p_game->board[arrival] = cache;
   return to_return;
-};
+}
 
 
 /*
@@ -917,7 +918,7 @@ int _total_w_score(chess_game *p_game) {
  * Positive score increase for the guy who played this.
  * TODO: improve this by adding castling, & central positionning...
  */
-int _score_per_play(chess_game *p_game, int from, int to) {
+int _score_per_play(chess_game *p_game, int to) {
   return _score_per_piece(p_game->board[to]);
 }
 
@@ -1096,4 +1097,4 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
   printf("Avg. Nodes/sec: %f\n", seen / time_elapsed);
   printf("Nodes Seen: %li\n", seen);
 
-};
+}
