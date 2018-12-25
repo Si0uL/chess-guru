@@ -1,3 +1,4 @@
+from subprocess import Popen, PIPE
 from flask import Flask, render_template, redirect
 
 from game import ChessGame
@@ -6,7 +7,7 @@ app = Flask(__name__)
 
 HIGHLIGHTED = []
 SELECTED = []
-DEPTH = 6
+DEPTH = 8
 AUTOSAVE = True
 GAME = ChessGame()
 
@@ -98,6 +99,20 @@ def autoplay():
     if FINISHED:
         return redirect('/')
 
+    # find the best move with C engine
+    args = ['c_engine/predictor.out', 'board.txt', str(DEPTH)]
+    with Popen(args, stdout=PIPE) as proc:
+        res = proc.stdout.read().decode()
+        print("\n".join(res.split('\n')[:-2]))
+        dep, arr = res.split('\n')[-2].split(' ')
+        dep, arr = int(dep), int(arr)
+        dep, arr = (7 - dep // 8, dep % 8), (7 - arr // 8, arr % 8)
+
+    return redirect('/play/{}/{}/{}/{}'.format(*dep, *arr))
+
+    """
+    (USING PYTHON ENGINE)
+
     # find the best move
     tree, best_index = GAME.build_tree(DEPTH)
 
@@ -106,6 +121,7 @@ def autoplay():
     arow, acol = tree[best_index]['to']
 
     return redirect('/play/{}/{}/{}/{}'.format(srow, scol, arow, acol))
+    """
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True, host="127.0.0.1", port=5000)
