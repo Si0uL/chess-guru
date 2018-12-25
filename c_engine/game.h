@@ -28,7 +28,7 @@ void print_board(chess_game *p_game);
 void print_location(int location);
 
 
-void load_game(chess_game *p_game, char *path);
+void load_game(chess_game *p_game, const char *path);
 
 
 void play(chess_game *p_game, int from, int to, int *unplay_infos);

@@ -71,7 +71,7 @@ void print_location(int location) {
   printf("%c%d", col_label[location % 8], location / 8 + 1);
 }
 
-void load_game(chess_game *p_game, char *path) {
+void load_game(chess_game *p_game, const char *path) {
   FILE *p_file = NULL;
 
   p_file = fopen(path, "r");
