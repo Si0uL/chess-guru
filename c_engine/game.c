@@ -1031,7 +1031,7 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
       }
 
     /* 3. If we have reached the end of the moves at this depth, go up */
-    } else if (current_index[current_depth] == mvt_nbs[current_depth]) {
+    } else if (current_index[current_depth] == mvt_nbs[current_depth] - 1) {
 
       /* Update Nu */
       if (current_depth % 2 == 0) {
