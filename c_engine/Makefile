@@ -5,10 +5,16 @@ EXEC=simple_tester
 
 all: $(EXEC)
 
-simple_tester: game.o simple_tester.o
-	$(CC) -o $@ $^ $(LDFLAGS)
+predictor: predictor.o game.o
+	$(CC) -o $@.out $^ $(LDFLAGS)
+
+simple_tester: simple_tester.o game.o
+	$(CC) -o $@.out $^ $(LDFLAGS)
 
 game.o: game.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+predictor.o: predictor.c game.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 simple_tester.o: simple_tester.c game.h
