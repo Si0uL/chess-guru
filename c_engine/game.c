@@ -980,6 +980,8 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
     /* 2. If we have not already (re)initialized moves at this depth & go down*/
     } else if (current_index[current_depth] == -1) {
 
+      /* increment common node counter */
+      seen ++;
       /* Evaluates all available movements for lower depth */
       mvt_nbs[current_depth] = all_available_movements(
         p_game,
@@ -1003,8 +1005,6 @@ void alpha_beta_predict(chess_game *p_game, int depth, int *p_best_from,
         } else {
           nus[current_depth] = 0;
         }
-        /* Counts as a terminal node, so increase seen */
-        seen ++;
         /* Init index at this depth so that it will be re-init next time */
         current_index[current_depth] = -1;
         /* Unplay the move that made us come here */
